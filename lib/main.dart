@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-import './record-page/record-main.dart';
+import './record-screen/record-main.dart';
 
 void main() {
   const bgDark = 0xff202020;
@@ -18,7 +18,7 @@ class App extends StatelessWidget {
     return new MaterialApp(
         debugShowCheckedModeBanner: false,
         theme: ThemeData(fontFamily: 'Poppins'),
-        title: 'Welcome to Flutter',
+        title: 'Drivetrain 0.1.0pr-2',
         home: new RecordMain());
   }
 }
