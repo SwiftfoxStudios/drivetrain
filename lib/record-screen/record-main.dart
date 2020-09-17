@@ -33,18 +33,18 @@ class _RecordMainState extends State<RecordMain> {
         CameraPosition(target: LatLng(pos.latitude, pos.longitude), zoom: 15)));
   }
 
-  timerCounter() async {
-    Timer.periodic(Duration(seconds: 1), (timer) {
-      moveCamera();
-    });
-  }
+  // timerCounter() async {
+  //   Timer.periodic(Duration(seconds: 1), (timer) {
+  //     moveCamera();
+  //   });
+  // }
 
   static final CameraPosition initial =
       CameraPosition(target: LatLng(51.453318, -0.102559), zoom: 16);
 
   Widget build(BuildContext context) {
     moveCamera();
-    timerCounter();
+    // timerCounter();
     final deviceHeight = MediaQuery.of(context).size.height;
     final deviceWidth = MediaQuery.of(context).size.width;
     final statusHeight = MediaQuery.of(context).padding.top;
@@ -79,7 +79,7 @@ class _RecordMainState extends State<RecordMain> {
                 borderRadius: new BorderRadius.only(
                     topLeft: const Radius.circular(15.0),
                     topRight: const Radius.circular(15.0))),
-            height: deviceHeight / 2 - (56 + statusHeight),
+            height: deviceHeight / 2 - (56 + statusHeight) - deviceHeight / 10,
           ),
           Container(
             height: deviceHeight / 18,
@@ -89,41 +89,12 @@ class _RecordMainState extends State<RecordMain> {
                     topLeft: const Radius.circular(0.0),
                     topRight: const Radius.circular(0.0))),
           ),
-          Positioned(
-              bottom: 0,
-              child: Container(
-                  color: Color(bgDark),
-                  width: deviceWidth,
-                  child: BottomNavigationBar(
-                    backgroundColor: Color(bgDark),
-                    unselectedItemColor: Colors.white,
-                    unselectedFontSize: deviceHeight / 48,
-                    selectedFontSize: deviceHeight / 48,
-                    iconSize: deviceHeight / 25,
-                    selectedItemColor: Color(accent),
-                    currentIndex: _selectedIndex,
-                    onTap: navigatePage,
-                    items: const <BottomNavigationBarItem>[
-                      BottomNavigationBarItem(
-                        icon: Icon(Icons.navigation),
-                        title: Text('DISCOVER'),
-                      ),
-                      BottomNavigationBarItem(
-                        icon: Icon(Icons.adjust),
-                        title: Text('RECORD'),
-                      ),
-                      BottomNavigationBarItem(
-                        icon: Icon(Icons.data_usage),
-                        title: Text('ANALYSE'),
-                      ),
-                    ],
-                  ))),
           Positioned.fill(
             top: deviceHeight / 18,
-            bottom: deviceHeight / 10,
+            bottom: 0,
             child: Container(
                 color: Color(bgLight),
-                height: deviceHeight / 18,
+                height: deviceHeight / 1,
                 width: deviceWidth,
                 child: Stack(children: <Widget>[
                   Center(
