@@ -1,31 +1,39 @@
+// MAIN DART PARENT IMPORT
 import 'dart:async';
 
+// FILE DEPENDENCIES
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:flutter/services.dart';
 import 'package:location/location.dart';
 
-int bgDark = 0xff202020;
-int bgLight = 0xff2e2e2e;
-int accent = 0xffff5d54;
+// COLOURS USED IN PROJECT
+const bgDark = 0xff202020;
+const bgLight = 0xff2e2e2e;
+const accent = 0xffff5d54;
 
+// MAIN CLASS INSTANTIATION OF PAGE "RECORD PAGE"
 class RecordMain extends StatefulWidget {
   @override
   _RecordMainState createState() => _RecordMainState();
 }
 
+// EXTENSION OF INSTANTIATION
 class _RecordMainState extends State<RecordMain> {
   Completer<GoogleMapController> _controller = Completer();
   @override
   Location location = new Location();
   int _selectedIndex = 1;
+  bool isSwitched = false;
 
+// SETS INITIAL PAGE OF NAVIGATION BAR
   void navigatePage(int index) {
     setState(() {
       _selectedIndex = index;
     });
   }
 
+// SETS INITIAL CAMERA POSITION OF GOOGLE MAP
   Future<void> moveCamera() async {
     var pos = await location.getLocation();
     final GoogleMapController controller = await _controller.future;
@@ -96,7 +104,29 @@ class _RecordMainState extends State<RecordMain> {
                 color: Color(bgLight),
                 height: deviceHeight / 1,
                 width: deviceWidth,
-                child: Stack(children: <Widget>[
+                child: Column(children: <Widget>[
+                  Container(height: deviceHeight / 25),
+                  Center(
+                      child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: <Widget>[
+                      Icon(Icons.directions_bike, color: Colors.white),
+                      Switch(
+                        value: isSwitched,
+                        onChanged: (value) {
+                          setState(() {
+                            isSwitched = value;
+                            print(isSwitched);
+                          });
+                        },
+                        inactiveTrackColor: Colors.white,
+                        inactiveThumbColor: Color(accent),
+                        activeTrackColor: Colors.white,
+                        activeColor: Color(accent),
+                      ),
+                      Icon(Icons.directions_run, color: Colors.white)
+                    ],
+                  )),
                   Center(
                     child: RaisedButton(
                       child: Text("START RECORDING"),

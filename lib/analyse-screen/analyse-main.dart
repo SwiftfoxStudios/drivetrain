@@ -51,7 +51,22 @@ class _AnalyseMainState extends State<AnalyseMain> {
                                   topRight: const Radius.circular(15.0),
                                   bottomLeft: const Radius.circular(15.0),
                                   bottomRight: const Radius.circular(15.0),
-                                ))))),
+                                )),
+                            child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: <Widget>[
+                                  Text("SEE PAST RECORDINGS",
+                                      style: TextStyle(
+                                          fontSize: deviceHeight / 28,
+                                          color: Colors.black)),
+                                  Container(height: 5),
+                                  Text("View and manage your saved recordings",
+                                      style: TextStyle(
+                                          height: 1.2,
+                                          fontSize: deviceHeight / 41,
+                                          color: Colors.black)),
+                                ]),
+                            padding: EdgeInsets.fromLTRB(14, 5, 20, 12)))),
                 Container(
                     color: Color(bgLight),
                     height: deviceHeight / 5.4,
@@ -66,7 +81,24 @@ class _AnalyseMainState extends State<AnalyseMain> {
                                   topRight: const Radius.circular(15.0),
                                   bottomLeft: const Radius.circular(15.0),
                                   bottomRight: const Radius.circular(15.0),
-                                ))))),
+                                )),
+                            child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: <Widget>[
+                                  Text("SEE THE STATS",
+                                      style: TextStyle(
+                                          fontSize: deviceHeight / 28,
+                                          color: Colors.black)),
+                                  Container(height: 5),
+                                  Text(
+                                      "Track your progress in several variables over time",
+                                      style: TextStyle(
+                                          height: 1.2,
+                                          fontSize: deviceHeight / 41,
+                                          color: Colors.black,
+                                          fontWeight: FontWeight.w100)),
+                                ]),
+                            padding: EdgeInsets.fromLTRB(14, 5, 20, 12)))),
               ],
             )));
   }
