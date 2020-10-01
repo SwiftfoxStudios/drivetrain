@@ -18,7 +18,7 @@ class App extends StatelessWidget {
     return new MaterialApp(
         debugShowCheckedModeBanner: false,
         theme: ThemeData(fontFamily: 'Poppins'),
-        title: 'Drivetrain 0.1.0pr-2',
+        title: 'Drivetrain 0.1.0pr-8',
         home: new HomeMain());
   }
 }

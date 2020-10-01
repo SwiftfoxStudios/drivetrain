@@ -50,27 +50,33 @@ class _RecordMainState extends State<RecordMain> {
   static final CameraPosition initial =
       CameraPosition(target: LatLng(51.453318, -0.102559), zoom: 16);
 
+  // PARENT WIDGET, HOLDS ALL WIDGETS
   Widget build(BuildContext context) {
     moveCamera();
     // timerCounter();
+    // DEVICE DIMENSIONS FOR DEVICE-SPECIFIC MEASUREMENTS
     final deviceHeight = MediaQuery.of(context).size.height;
     final deviceWidth = MediaQuery.of(context).size.width;
     final statusHeight = MediaQuery.of(context).padding.top;
     return Scaffold(
+      // PARENT APP BAR
       appBar: AppBar(
         backgroundColor: Color(bgDark),
         title: Text("RECORD",
             style: TextStyle(fontSize: deviceHeight / 20, color: Colors.white)),
         elevation: 0.0,
         actions: <Widget>[
+          // SETTINGS ICON
           IconButton(
               icon: Icon(Icons.settings, color: Colors.white),
               onPressed: null,
               iconSize: deviceHeight / 20)
         ],
       ),
+      // PAGE BODY
       body: Column(children: <Widget>[
         Container(
+            // GOOGLE MAP CONTAINER
             height: deviceHeight / 2,
             child: GoogleMap(
               initialCameraPosition: initial,
@@ -82,6 +88,7 @@ class _RecordMainState extends State<RecordMain> {
             )),
         Stack(children: <Widget>[
           Container(
+            // PARENT CONTAINER
             decoration: new BoxDecoration(
                 color: Color(bgDark),
                 borderRadius: new BorderRadius.only(
@@ -90,6 +97,7 @@ class _RecordMainState extends State<RecordMain> {
             height: deviceHeight / 2 - (56 + statusHeight) - deviceHeight / 10,
           ),
           Container(
+            // BREAKPOINT FOR SOME BULLSHIT I CANT FUCKING REMEMBER
             height: deviceHeight / 18,
             decoration: new BoxDecoration(
                 color: Color(bgDark),
@@ -101,13 +109,16 @@ class _RecordMainState extends State<RecordMain> {
             top: deviceHeight / 18,
             bottom: 0,
             child: Container(
+                // CONTAINER FOR MAIN UI
                 color: Color(bgLight),
                 height: deviceHeight / 1,
                 width: deviceWidth,
                 child: Column(children: <Widget>[
+                  // BREAKPOINT
                   Container(height: deviceHeight / 25),
                   Center(
                       child: Row(
+                    // TOGGLE SWITCH UI
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: <Widget>[
                       Icon(Icons.directions_bike, color: Colors.white),
@@ -128,6 +139,7 @@ class _RecordMainState extends State<RecordMain> {
                     ],
                   )),
                   Center(
+                    // START RECORDING BUTTON
                     child: RaisedButton(
                       child: Text("START RECORDING"),
                       onPressed: () {},
