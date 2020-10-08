@@ -33,6 +33,12 @@ class _RecordMainState extends State<RecordMain> {
     });
   }
 
+  recordActivity() {
+    Navigator.of(context).push(MaterialPageRoute(
+      builder: (context) => Recording(travelType: isSwitched),
+    ));
+  }
+
 // SETS INITIAL CAMERA POSITION OF GOOGLE MAP
   Future<void> moveCamera() async {
     var pos = await location.getLocation();
@@ -98,6 +104,7 @@ class _RecordMainState extends State<RecordMain> {
           ),
           Container(
             // BREAKPOINT FOR SOME BULLSHIT I CANT FUCKING REMEMBER
+            // too bad !
             height: deviceHeight / 18,
             decoration: new BoxDecoration(
                 color: Color(bgDark),
@@ -140,9 +147,11 @@ class _RecordMainState extends State<RecordMain> {
                   )),
                   Center(
                     // START RECORDING BUTTON
-                    child: RaisedButton(
+                    child: FlatButton(
                       child: Text("START RECORDING"),
-                      onPressed: () {},
+                      onPressed: () {
+                        recordActivity();
+                      },
                       color: Color(accent),
                       textColor: Colors.white,
                       padding: EdgeInsets.fromLTRB(10, 10, 10, 10),
@@ -154,5 +163,33 @@ class _RecordMainState extends State<RecordMain> {
         ]),
       ]),
     );
+  }
+}
+
+class Recording extends StatefulWidget {
+  bool travelType;
+  Recording({this.travelType});
+
+  @override
+  _RecordingState createState() => _RecordingState(travelType);
+}
+
+class _RecordingState extends State<Recording> {
+  bool travelType;
+  Color testVal;
+  _RecordingState(this.travelType);
+
+  @override
+  void parseType() {
+    if (travelType) {
+      testVal = Colors.green;
+    } else {
+      testVal = Colors.red;
+    }
+  }
+
+  Widget build(BuildContext context) {
+    parseType();
+    return Scaffold(backgroundColor: testVal);
   }
 }
