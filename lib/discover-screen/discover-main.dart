@@ -5,8 +5,11 @@ import 'package:flutter/material.dart';
 
 import 'dart:async';
 
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+
 // GMAP FOR ROUTE GENERATION
-import 'package:google_maps_place_picker/google_maps_place_picker.dart';
+import 'package:flutter_polyline_points/flutter_polyline_points.dart';
 import 'package:flutter/services.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:location/location.dart';
@@ -254,6 +257,45 @@ class GenerateRoutePage extends StatefulWidget {
 
 class _GenerateRoutePageState extends State<GenerateRoutePage> {
   Completer<GoogleMapController> _controller = Completer();
+  TextEditingController initalDistanceController = TextEditingController()
+    ..text = '10';
+
+  PolylinePoints polylinePoints;
+  List<LatLng> polylineCoords = [];
+  Map<PolylineId, Polyline> polylines = {};
+
+  _createPolylines(start, dest) async {
+    polylinePoints = PolylinePoints();
+    PolylineResult result = await polylinePoints.getRouteBetweenCoordinates(
+      "AIzaSyDIjNLerMn_mn006T9_DLAQuyzuC_8FWiA", // Google Maps API Key
+      PointLatLng(start.latitude, start.longitude),
+      PointLatLng(dest.latitude, dest.longitude),
+      travelMode: TravelMode.driving,
+    );
+
+    // Adding the coordinates to the list
+    if (result.points.isNotEmpty) {
+      result.points.forEach((PointLatLng point) {
+        polylineCoords.add(LatLng(point.latitude, point.longitude));
+      });
+    }
+
+    // Defining an ID
+    PolylineId id = PolylineId('poly');
+
+    // Initializing Polyline
+    Polyline polyline = Polyline(
+      polylineId: id,
+      color: Color(accent),
+      points: polylineCoords,
+      width: 5,
+    );
+
+    // Adding the polyline to the map
+    setState(() {
+      polylines[id] = polyline;
+    });
+  }
 
   static final CameraPosition initial =
       CameraPosition(target: LatLng(51.453318, -0.102559), zoom: 13);
@@ -269,7 +311,7 @@ class _GenerateRoutePageState extends State<GenerateRoutePage> {
         CameraPosition(target: LatLng(pos.latitude, pos.longitude), zoom: 15)));
   }
 
-  showError() {
+  showLocationError() {
     showDialog(
       context: context,
       builder: (BuildContext context) {
@@ -277,6 +319,28 @@ class _GenerateRoutePageState extends State<GenerateRoutePage> {
           title: new Text("Invalid Location"),
           backgroundColor: Colors.white,
           content: new Text("Sorry, that location could not be found."),
+          actions: <Widget>[
+            new FlatButton(
+              child: new Text("CLOSE"),
+              color: Color(accent),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  showGeneratorError() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: new Text("Invalid Distance"),
+          backgroundColor: Colors.white,
+          content: new Text("The distance must be under 1000km."),
           actions: <Widget>[
             new FlatButton(
               child: new Text("CLOSE"),
@@ -310,7 +374,9 @@ class _GenerateRoutePageState extends State<GenerateRoutePage> {
       controller.animateCamera(CameraUpdate.newCameraPosition(CameraPosition(
           target: LatLng(result[0].latitude, result[0].longitude), zoom: 15)));
     } on gcd.NoResultFoundException {
-      showError();
+      showLocationError();
+    } on PlatformException {
+      showLocationError();
     }
   }
 
@@ -322,16 +388,16 @@ class _GenerateRoutePageState extends State<GenerateRoutePage> {
     return theta * pi / 180;
   }
 
-  calculatePoint(lat1, lon1, bearing, distance) {
-    double lat1Rad = deg2rad(lat1);
-    double lon1Rad = deg2rad(lon1);
-    double bearingRad = deg2rad(bearing);
+  List calculatePoint(lat1, lon1, bearing, distance) {
+    num lat1Rad = deg2rad(lat1);
+    num lon1Rad = deg2rad(lon1);
+    num bearingRad = deg2rad(bearing);
     // 6371.01 is the average radius of Earth in km
-    double distRad = distance / 6371.01;
-    double rlon;
-    double rlat;
-    double lat2;
-    double lon2;
+    num distRad = distance / 6371.01;
+    num rlon;
+    num rlat;
+    num lat2;
+    num lon2;
 
     rlat = asin(sin(lat1Rad) * cos(distRad) +
         cos(lat1Rad) * sin(distRad) * cos(bearingRad));
@@ -348,13 +414,38 @@ class _GenerateRoutePageState extends State<GenerateRoutePage> {
 
     lat2 = rad2deg(rlat);
     lon2 = rad2deg(rlon);
-    print(lat2.toStringAsFixed(5));
-    print(lon2.toStringAsFixed(5));
+    return [lat2.toStringAsFixed(5), lon2.toStringAsFixed(5)];
+  }
+
+  generateCircularRoute() {
+    String userDistanceInputRaw = initalDistanceController.text;
+    num userDistanceInput;
+    try {
+      userDistanceInput = num.parse(userDistanceInputRaw);
+      if (userDistanceInput > 1000) {
+        showGeneratorError();
+      } else {
+        print("SUCCESS");
+      }
+      List centralPoint =
+          calculatePoint(51, 0, 360 * 1 / 16, userDistanceInput / 2 * pi);
+      String centralLat = centralPoint[0];
+      num numCentralLat = num.parse(centralLat);
+      String centralLon = centralPoint[1];
+      num numCentralLon = num.parse(centralLon);
+      for (var i = 1; i <= 16; i++) {
+        print(calculatePoint(numCentralLat, numCentralLon, 360 * i / 16,
+            userDistanceInput / (2 * pi)));
+      }
+    } on FormatException {
+      showGeneratorError();
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     calculatePoint(51, 22, 180, 111.1);
+
     final deviceHeight = MediaQuery.of(context).size.height;
     final deviceWidth = MediaQuery.of(context).size.width;
     final statusHeight = MediaQuery.of(context).padding.top;
@@ -371,80 +462,125 @@ class _GenerateRoutePageState extends State<GenerateRoutePage> {
         ),
         body: SingleChildScrollView(
             child: Column(children: [
-          Stack(children: <Widget>[
-            Container(
-                // GOOGLE MAP CONTAINER
-                height: deviceHeight - statusHeight - 56,
-                child: GoogleMap(
-                  markers: Set.from(markerList),
-                  initialCameraPosition: initial,
-                  zoomControlsEnabled: false,
-                  myLocationEnabled: true,
-                  myLocationButtonEnabled: false,
-                  onMapCreated: (GoogleMapController controller) {
-                    _controller.complete(controller);
-                  },
-                  onLongPress: placeMarker,
-                )),
-            Positioned(
-              top: 15,
-              left: 15,
-              right: 15,
-              child: Container(
-                height: 55,
-                width: double.infinity,
-                child: TextField(
-                  // expands: true,
-                  onSubmitted: (value) {
-                    findLocation();
-                  },
-                  textAlignVertical: TextAlignVertical.center,
-                  style: TextStyle(color: Colors.white),
-                  decoration: InputDecoration(
-                      hintText: "Search Address or Location",
-                      hintStyle: TextStyle(fontSize: 16, color: Colors.white),
-                      border: InputBorder.none,
-                      contentPadding: EdgeInsets.only(left: 16),
-                      suffixIcon: IconButton(
-                        icon: Icon(Icons.search),
-                        color: Color(accent),
-                        onPressed: findLocation,
-                        iconSize: 40,
-                      )),
-                  onChanged: (value) {
-                    setState(() {
-                      userAddress = value;
-                    });
-                  },
-                ),
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(15),
-                  color: Color(alphaBg),
-                ),
-              ),
-            ),
-            Positioned(
-              top: deviceHeight / 1.8,
-              left: 15,
-              right: 15,
-              child: Container(
-                  padding: EdgeInsets.only(top: 8),
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(15),
-                    color: Color(alphaBg),
-                  ),
-                  height: 200,
-                  width: double.infinity,
-                  child: Text(
-                    "Long press on map to select start/end point",
-                    style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold),
-                    textAlign: TextAlign.center,
+          Container(height: deviceWidth / 20),
+          Container(
+            height: 55,
+            width: deviceWidth / 100 * 95,
+            child: TextField(
+              // expands: true,
+              onSubmitted: (value) {
+                findLocation();
+              },
+              textAlignVertical: TextAlignVertical.center,
+              style: TextStyle(color: Colors.white),
+              decoration: InputDecoration(
+                  hintText: "Search Address or Location",
+                  hintStyle: TextStyle(fontSize: 16, color: Colors.white),
+                  border: InputBorder.none,
+                  contentPadding: EdgeInsets.only(left: 16),
+                  suffixIcon: IconButton(
+                    icon: Icon(Icons.search),
+                    color: Color(accent),
+                    onPressed: findLocation,
+                    iconSize: 40,
                   )),
+              onChanged: (value) {
+                setState(() {
+                  userAddress = value;
+                });
+              },
             ),
-          ])
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(15),
+              color: Color(alphaBg),
+            ),
+          ),
+          Container(height: deviceWidth / 20),
+          Container(
+            padding: EdgeInsets.only(top: 8),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(15),
+              color: Color(alphaBg),
+            ),
+            height: 100,
+            width: deviceWidth / 100 * 95,
+            child: Column(children: [
+              Text(
+                "Long press on map to select start/end point",
+                style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold),
+                textAlign: TextAlign.center,
+              ),
+              Row(
+                children: [
+                  Container(width: 20),
+                  Container(
+                      child: Text("Distance:",
+                          style:
+                              TextStyle(fontSize: 16, color: Color(accent)))),
+                  Container(
+                      width: 52,
+                      padding: EdgeInsets.all(10.0),
+                      child: TextField(
+                          style: TextStyle(fontSize: 16, color: Colors.white),
+                          controller: initalDistanceController,
+                          autocorrect: true,
+                          decoration: InputDecoration(
+                            hintStyle:
+                                TextStyle(fontSize: 16, color: Colors.white),
+                            enabledBorder: UnderlineInputBorder(
+                              borderSide: BorderSide(color: Color(accent)),
+                            ),
+                            focusedBorder: UnderlineInputBorder(
+                              borderSide: BorderSide(color: Colors.green),
+                            ),
+                          ))),
+                  Container(
+                      child: Text("km",
+                          // REMEMBER TO CHANGE IF UNITS SETTINGS EXIST
+                          style:
+                              TextStyle(fontSize: 16, color: Color(accent)))),
+                  Container(width: 100),
+                  FlatButton(
+                    child: Text("GENERATE!"),
+                    onPressed: () {
+                      generateCircularRoute();
+                    },
+                    color: Color(accent),
+                    textColor: Colors.white,
+                    padding: EdgeInsets.fromLTRB(10, 10, 10, 10),
+                    splashColor: Colors.green,
+                  )
+                ],
+              )
+            ]),
+          ),
+          Container(height: deviceWidth / 20),
+          Container(
+            // GOOGLE MAP CONTAINER
+            height: deviceHeight -
+                deviceWidth / 20 * 3 -
+                100 -
+                56 -
+                statusHeight -
+                56,
+            child: GoogleMap(
+              markers: Set.from(markerList),
+              polylines: Set<Polyline>.of(polylines.values),
+              initialCameraPosition: initial,
+              zoomControlsEnabled: false,
+              myLocationEnabled: true,
+              myLocationButtonEnabled: false,
+              onMapCreated: (GoogleMapController controller) {
+                _controller.complete(controller);
+                _createPolylines(
+                    LatLng(51.453318, -0.102559), LatLng(52.453318, -0.102559));
+              },
+              onLongPress: placeMarker,
+            ),
+          ),
         ])));
   }
 }
