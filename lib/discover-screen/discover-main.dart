@@ -1,5 +1,6 @@
 // MATERIAL DESIGN IMPORT
 import 'dart:math';
+import 'dart:core';
 
 import 'package:flutter/material.dart';
 
@@ -62,16 +63,11 @@ class _DiscoverMainState extends State<DiscoverMain> {
         // APPBAR
         appBar: AppBar(
           backgroundColor: Color(bgDark),
-          title: Text("DISCOVER",
-              style:
-                  TextStyle(fontSize: deviceHeight / 20, color: Colors.white)),
+          title: Text("DISCOVER", style: TextStyle(fontSize: deviceHeight / 20, color: Colors.white)),
           elevation: 0.0,
           actions: <Widget>[
             // SETTINGS ICON
-            IconButton(
-                icon: Icon(Icons.settings, color: Colors.white),
-                onPressed: null,
-                iconSize: deviceHeight / 20)
+            IconButton(icon: Icon(Icons.settings, color: Colors.white), onPressed: null, iconSize: deviceHeight / 20)
           ],
         ),
         body: Container(
@@ -100,29 +96,15 @@ class _DiscoverMainState extends State<DiscoverMain> {
                                         borderRadius: new BorderRadius.only(
                                           topLeft: const Radius.circular(15.0),
                                           topRight: const Radius.circular(15.0),
-                                          bottomLeft:
-                                              const Radius.circular(15.0),
-                                          bottomRight:
-                                              const Radius.circular(15.0),
+                                          bottomLeft: const Radius.circular(15.0),
+                                          bottomRight: const Radius.circular(15.0),
                                         )),
-                                    child: Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: <Widget>[
-                                          Text("GENERATE A ROUTE",
-                                              style: TextStyle(
-                                                  fontSize: deviceHeight / 28,
-                                                  color: Colors.black)),
-                                          Container(height: 5),
-                                          Text(
-                                              "Find new routes using the circular route generator",
-                                              style: TextStyle(
-                                                  height: 1.2,
-                                                  fontSize: deviceHeight / 41,
-                                                  color: Colors.black)),
-                                        ]),
-                                    padding:
-                                        EdgeInsets.fromLTRB(14, 5, 20, 12)))))),
+                                    child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: <Widget>[
+                                      Text("GENERATE A ROUTE", style: TextStyle(fontSize: deviceHeight / 28, color: Colors.black)),
+                                      Container(height: 5),
+                                      Text("Find new routes using the circular route generator", style: TextStyle(height: 1.2, fontSize: deviceHeight / 41, color: Colors.black)),
+                                    ]),
+                                    padding: EdgeInsets.fromLTRB(14, 5, 20, 12)))))),
                 Container(
                     color: Color(bgLight),
                     height: deviceHeight / 5.4,
@@ -140,29 +122,15 @@ class _DiscoverMainState extends State<DiscoverMain> {
                                         borderRadius: new BorderRadius.only(
                                           topLeft: const Radius.circular(15.0),
                                           topRight: const Radius.circular(15.0),
-                                          bottomLeft:
-                                              const Radius.circular(15.0),
-                                          bottomRight:
-                                              const Radius.circular(15.0),
+                                          bottomLeft: const Radius.circular(15.0),
+                                          bottomRight: const Radius.circular(15.0),
                                         )),
-                                    child: Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: <Widget>[
-                                          Text("VIEW SAVED ROUTES",
-                                              style: TextStyle(
-                                                  fontSize: deviceHeight / 28,
-                                                  color: Colors.black)),
-                                          Container(height: 5),
-                                          Text(
-                                              "View and manage the routes you have saved",
-                                              style: TextStyle(
-                                                  height: 1.2,
-                                                  fontSize: deviceHeight / 41,
-                                                  color: Colors.black)),
-                                        ]),
-                                    padding:
-                                        EdgeInsets.fromLTRB(14, 5, 20, 12)))))),
+                                    child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: <Widget>[
+                                      Text("VIEW SAVED ROUTES", style: TextStyle(fontSize: deviceHeight / 28, color: Colors.black)),
+                                      Container(height: 5),
+                                      Text("View and manage the routes you have saved", style: TextStyle(height: 1.2, fontSize: deviceHeight / 41, color: Colors.black)),
+                                    ]),
+                                    padding: EdgeInsets.fromLTRB(14, 5, 20, 12)))))),
                 Container(
                     color: Color(bgLight),
                     height: deviceHeight / 5.4,
@@ -180,30 +148,15 @@ class _DiscoverMainState extends State<DiscoverMain> {
                                         borderRadius: new BorderRadius.only(
                                           topLeft: const Radius.circular(15.0),
                                           topRight: const Radius.circular(15.0),
-                                          bottomLeft:
-                                              const Radius.circular(15.0),
-                                          bottomRight:
-                                              const Radius.circular(15.0),
+                                          bottomLeft: const Radius.circular(15.0),
+                                          bottomRight: const Radius.circular(15.0),
                                         )),
-                                    child: Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: <Widget>[
-                                          Text("SEE POPULAR ROUTES",
-                                              style: TextStyle(
-                                                  fontSize: deviceHeight / 28,
-                                                  color: Colors.black)),
-                                          Container(height: 5),
-                                          Text(
-                                              "View the most popular routes according to our users",
-                                              style: TextStyle(
-                                                  height: 1.2,
-                                                  fontSize: deviceHeight / 41,
-                                                  color: Colors.black,
-                                                  fontWeight: FontWeight.w100)),
-                                        ]),
-                                    padding:
-                                        EdgeInsets.fromLTRB(14, 5, 20, 12)))))),
+                                    child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: <Widget>[
+                                      Text("SEE POPULAR ROUTES", style: TextStyle(fontSize: deviceHeight / 28, color: Colors.black)),
+                                      Container(height: 5),
+                                      Text("View the most popular routes according to our users", style: TextStyle(height: 1.2, fontSize: deviceHeight / 41, color: Colors.black, fontWeight: FontWeight.w100)),
+                                    ]),
+                                    padding: EdgeInsets.fromLTRB(14, 5, 20, 12)))))),
                 Container(
                     color: Color(bgLight),
                     height: deviceHeight / 5.4,
@@ -221,30 +174,15 @@ class _DiscoverMainState extends State<DiscoverMain> {
                                         borderRadius: new BorderRadius.only(
                                           topLeft: const Radius.circular(15.0),
                                           topRight: const Radius.circular(15.0),
-                                          bottomLeft:
-                                              const Radius.circular(15.0),
-                                          bottomRight:
-                                              const Radius.circular(15.0),
+                                          bottomLeft: const Radius.circular(15.0),
+                                          bottomRight: const Radius.circular(15.0),
                                         )),
-                                    child: Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: <Widget>[
-                                          Text("IMPORT ROUTES",
-                                              style: TextStyle(
-                                                  fontSize: deviceHeight / 28,
-                                                  color: Colors.black)),
-                                          Container(height: 5),
-                                          Text(
-                                              "Import .gpx files into the app to use as routes",
-                                              style: TextStyle(
-                                                  height: 1.2,
-                                                  fontSize: deviceHeight / 41,
-                                                  color: Colors.black,
-                                                  fontWeight: FontWeight.w100)),
-                                        ]),
-                                    padding:
-                                        EdgeInsets.fromLTRB(14, 5, 20, 12)))))),
+                                    child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: <Widget>[
+                                      Text("IMPORT ROUTES", style: TextStyle(fontSize: deviceHeight / 28, color: Colors.black)),
+                                      Container(height: 5),
+                                      Text("Import .gpx files into the app to use as routes", style: TextStyle(height: 1.2, fontSize: deviceHeight / 41, color: Colors.black, fontWeight: FontWeight.w100)),
+                                    ]),
+                                    padding: EdgeInsets.fromLTRB(14, 5, 20, 12)))))),
               ],
             )));
   }
@@ -257,17 +195,24 @@ class GenerateRoutePage extends StatefulWidget {
 
 class _GenerateRoutePageState extends State<GenerateRoutePage> {
   Completer<GoogleMapController> _controller = Completer();
-  TextEditingController initalDistanceController = TextEditingController()
-    ..text = '10';
+  // Set initial text of 'distance' on Generate pagee
+  TextEditingController initalDistanceController = TextEditingController()..text = '10';
 
+// Initialise polyline data fields
   PolylinePoints polylinePoints;
   List<LatLng> polylineCoords = [];
   Map<PolylineId, Polyline> polylines = {};
 
   _createPolylines(start, dest) async {
+    print("hello");
+    /*
+        DESC: Creates points to be shown on the map page
+        PARAMS: Start pos, Destination pos
+        RETURNS: Update list of polyline points
+    */
     polylinePoints = PolylinePoints();
     PolylineResult result = await polylinePoints.getRouteBetweenCoordinates(
-      "AIzaSyDIjNLerMn_mn006T9_DLAQuyzuC_8FWiA", // Google Maps API Key
+      "AIzaSyDIjNLerMn_mn006T9_DLAQuyzuC_8FWiA", // API Key
       PointLatLng(start.latitude, start.longitude),
       PointLatLng(dest.latitude, dest.longitude),
       travelMode: TravelMode.driving,
@@ -281,7 +226,8 @@ class _GenerateRoutePageState extends State<GenerateRoutePage> {
     }
 
     // Defining an ID
-    PolylineId id = PolylineId('poly');
+    int epoch = DateTime.now().microsecondsSinceEpoch;
+    PolylineId id = PolylineId(epoch.toString());
 
     // Initializing Polyline
     Polyline polyline = Polyline(
@@ -297,8 +243,7 @@ class _GenerateRoutePageState extends State<GenerateRoutePage> {
     });
   }
 
-  static final CameraPosition initial =
-      CameraPosition(target: LatLng(51.453318, -0.102559), zoom: 13);
+  static final CameraPosition initial = CameraPosition(target: LatLng(51.453318, -0.102559), zoom: 13);
   Location location = new Location();
   String userAddress;
   List<Marker> markerList = [];
@@ -307,11 +252,15 @@ class _GenerateRoutePageState extends State<GenerateRoutePage> {
   Future<void> moveCamera() async {
     var pos = await location.getLocation();
     final GoogleMapController controller = await _controller.future;
-    controller.animateCamera(CameraUpdate.newCameraPosition(
-        CameraPosition(target: LatLng(pos.latitude, pos.longitude), zoom: 15)));
+    controller.animateCamera(CameraUpdate.newCameraPosition(CameraPosition(target: LatLng(pos.latitude, pos.longitude), zoom: 15)));
   }
 
   showLocationError() {
+    /*
+        DESC: Catches invalid location entered
+        PARAMS: null
+        RETURNS: Error dialog box
+    */
     showDialog(
       context: context,
       builder: (BuildContext context) {
@@ -334,6 +283,11 @@ class _GenerateRoutePageState extends State<GenerateRoutePage> {
   }
 
   showGeneratorError() {
+    /*
+        DESC: Catches invalid distance type or length entered
+        PARAMS: null
+        RETURNS: Error dialog box
+    */
     showDialog(
       context: context,
       builder: (BuildContext context) {
@@ -355,24 +309,59 @@ class _GenerateRoutePageState extends State<GenerateRoutePage> {
     );
   }
 
+  showUnselectedError() {
+    /*
+        DESC: Catches no start location selected on map
+        PARAMS: null
+        RETURNS: Error dialog box
+    */
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: new Text("Start point not entered"),
+          backgroundColor: Colors.white,
+          content: new Text("Long press on the map to select a start point."),
+          actions: <Widget>[
+            new FlatButton(
+              child: new Text("CLOSE"),
+              color: Color(accent),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   placeMarker(LatLng point) {
+    /*
+        DESC: Places marker on user click
+        PARAMS: Point user clicks on
+        RETURNS: Marker on map at position of click
+    */
     print(point);
     setState(() {
       markerList = [];
       HapticFeedback.heavyImpact();
-      markerList
-          .add(Marker(markerId: MarkerId(point.toString()), position: point));
+      markerList.add(Marker(markerId: MarkerId(point.toString()), position: point));
     });
   }
 
   findLocation() async {
+    /*
+        DESC: Attemps to find location user has entered using 'geocoding' library
+        PARAMS: null
+        RETURNS ON SUCCESS: Move camera to target location
+        RETURNS ON FAILURE: Location Error
+    */
     final GoogleMapController controller = await _controller.future;
 
     try {
-      List result =
-          await gcd.locationFromAddress(userAddress, localeIdentifier: "en");
-      controller.animateCamera(CameraUpdate.newCameraPosition(CameraPosition(
-          target: LatLng(result[0].latitude, result[0].longitude), zoom: 15)));
+      List result = await gcd.locationFromAddress(userAddress, localeIdentifier: "en");
+      controller.animateCamera(CameraUpdate.newCameraPosition(CameraPosition(target: LatLng(result[0].latitude, result[0].longitude), zoom: 15)));
     } on gcd.NoResultFoundException {
       showLocationError();
     } on PlatformException {
@@ -389,27 +378,23 @@ class _GenerateRoutePageState extends State<GenerateRoutePage> {
   }
 
   List calculatePoint(lat1, lon1, bearing, distance) {
-    num lat1Rad = deg2rad(lat1);
-    num lon1Rad = deg2rad(lon1);
-    num bearingRad = deg2rad(bearing);
+    double lat1Rad = deg2rad(lat1);
+    double lon1Rad = deg2rad(lon1);
+    double bearingRad = deg2rad(bearing);
     // 6371.01 is the average radius of Earth in km
-    num distRad = distance / 6371.01;
+    double distRad = distance / 6371.01;
     num rlon;
-    num rlat;
-    num lat2;
-    num lon2;
+    double rlat;
+    double lat2;
+    double lon2;
 
-    rlat = asin(sin(lat1Rad) * cos(distRad) +
-        cos(lat1Rad) * sin(distRad) * cos(bearingRad));
+    rlat = asin(sin(lat1Rad) * cos(distRad) + cos(lat1Rad) * sin(distRad) * cos(bearingRad));
 
     if (cos(rlat) == 0) {
       // To handle returns of North/south poles
       rlon = lon1Rad;
     } else {
-      rlon =
-          ((lon1Rad - asin(sin(bearingRad) * sin(distRad) / cos(rlat)) + pi) %
-                  (2 * pi)) -
-              pi;
+      rlon = ((lon1Rad - asin(sin(bearingRad) * sin(distRad) / cos(rlat)) + pi) % (2 * pi)) - pi;
     }
 
     lat2 = rad2deg(rlat);
@@ -424,18 +409,35 @@ class _GenerateRoutePageState extends State<GenerateRoutePage> {
       userDistanceInput = num.parse(userDistanceInputRaw);
       if (userDistanceInput > 1000) {
         showGeneratorError();
-      } else {
-        print("SUCCESS");
       }
-      List centralPoint =
-          calculatePoint(51, 0, 360 * 1 / 16, userDistanceInput / 2 * pi);
-      String centralLat = centralPoint[0];
-      num numCentralLat = num.parse(centralLat);
-      String centralLon = centralPoint[1];
-      num numCentralLon = num.parse(centralLon);
-      for (var i = 1; i <= 16; i++) {
-        print(calculatePoint(numCentralLat, numCentralLon, 360 * i / 16,
-            userDistanceInput / (2 * pi)));
+      try {
+        String startingLocation = markerList[0].markerId.value;
+        // turns string into latlng directly by removing 'latlng()'
+        startingLocation = startingLocation.substring(7, startingLocation.length - 1);
+        List<String> startingLocationList = startingLocation.split(",");
+        List centralPoint = [startingLocationList[0].toString(), startingLocationList[1].toString()];
+        // List centralPoint = calculatePoint(double.parse(startingLocationList[0]), double.parse(startingLocationList[1]), 360 * 1 / 16, userDistanceInput / 2 * pi);
+
+        String centralLat = centralPoint[0];
+        num numCentralLat = num.parse(centralLat);
+        String centralLon = centralPoint[1];
+        num numCentralLon = num.parse(centralLon);
+
+        List oldPoint = calculatePoint(numCentralLat, numCentralLon, 360 * 1 / 16, userDistanceInput / (2 * pi));
+        List newPoint;
+        LatLng setDestinationPoint;
+        LatLng setOriginPoint = LatLng(double.parse(oldPoint[0]), double.parse(oldPoint[1]));
+        for (var i = 2; i <= 16; i++) {
+          newPoint = calculatePoint(numCentralLat, numCentralLon, 360 * i / 16, userDistanceInput / (2 * pi));
+          setDestinationPoint = LatLng(double.parse(oldPoint[0]), double.parse(oldPoint[1]));
+          print(i);
+          _createPolylines(setOriginPoint, setDestinationPoint);
+          print(polylines);
+
+          oldPoint = newPoint;
+        }
+      } on RangeError {
+        showUnselectedError();
       }
     } on FormatException {
       showGeneratorError();
@@ -444,8 +446,6 @@ class _GenerateRoutePageState extends State<GenerateRoutePage> {
 
   @override
   Widget build(BuildContext context) {
-    calculatePoint(51, 22, 180, 111.1);
-
     final deviceHeight = MediaQuery.of(context).size.height;
     final deviceWidth = MediaQuery.of(context).size.width;
     final statusHeight = MediaQuery.of(context).padding.top;
@@ -455,9 +455,7 @@ class _GenerateRoutePageState extends State<GenerateRoutePage> {
         appBar: AppBar(
           backgroundColor: Color(bgDark),
           centerTitle: true,
-          title: Text("GENERATE ROUTE",
-              style:
-                  TextStyle(fontSize: deviceHeight / 30, color: Colors.white)),
+          title: Text("GENERATE ROUTE", style: TextStyle(fontSize: deviceHeight / 30, color: Colors.white)),
           elevation: 0.0,
         ),
         body: SingleChildScrollView(
@@ -507,19 +505,13 @@ class _GenerateRoutePageState extends State<GenerateRoutePage> {
             child: Column(children: [
               Text(
                 "Long press on map to select start/end point",
-                style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold),
+                style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
                 textAlign: TextAlign.center,
               ),
               Row(
                 children: [
                   Container(width: 20),
-                  Container(
-                      child: Text("Distance:",
-                          style:
-                              TextStyle(fontSize: 16, color: Color(accent)))),
+                  Container(child: Text("Distance:", style: TextStyle(fontSize: 16, color: Color(accent)))),
                   Container(
                       width: 52,
                       padding: EdgeInsets.all(10.0),
@@ -528,8 +520,7 @@ class _GenerateRoutePageState extends State<GenerateRoutePage> {
                           controller: initalDistanceController,
                           autocorrect: true,
                           decoration: InputDecoration(
-                            hintStyle:
-                                TextStyle(fontSize: 16, color: Colors.white),
+                            hintStyle: TextStyle(fontSize: 16, color: Colors.white),
                             enabledBorder: UnderlineInputBorder(
                               borderSide: BorderSide(color: Color(accent)),
                             ),
@@ -540,8 +531,7 @@ class _GenerateRoutePageState extends State<GenerateRoutePage> {
                   Container(
                       child: Text("km",
                           // REMEMBER TO CHANGE IF UNITS SETTINGS EXIST
-                          style:
-                              TextStyle(fontSize: 16, color: Color(accent)))),
+                          style: TextStyle(fontSize: 16, color: Color(accent)))),
                   Container(width: 100),
                   FlatButton(
                     child: Text("GENERATE!"),
@@ -560,12 +550,7 @@ class _GenerateRoutePageState extends State<GenerateRoutePage> {
           Container(height: deviceWidth / 20),
           Container(
             // GOOGLE MAP CONTAINER
-            height: deviceHeight -
-                deviceWidth / 20 * 3 -
-                100 -
-                56 -
-                statusHeight -
-                56,
+            height: deviceHeight - deviceWidth / 20 * 3 - 100 - 56 - statusHeight - 56,
             child: GoogleMap(
               markers: Set.from(markerList),
               polylines: Set<Polyline>.of(polylines.values),
@@ -575,8 +560,7 @@ class _GenerateRoutePageState extends State<GenerateRoutePage> {
               myLocationButtonEnabled: false,
               onMapCreated: (GoogleMapController controller) {
                 _controller.complete(controller);
-                _createPolylines(
-                    LatLng(51.453318, -0.102559), LatLng(52.453318, -0.102559));
+                // _createPolylines(LatLng(51.453318, -0.102559), LatLng(52.453318, -0.102559));
               },
               onLongPress: placeMarker,
             ),
