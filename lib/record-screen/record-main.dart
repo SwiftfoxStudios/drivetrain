@@ -43,8 +43,7 @@ class _RecordMainState extends State<RecordMain> {
   Future<void> moveCamera() async {
     var pos = await location.getLocation();
     final GoogleMapController controller = await _controller.future;
-    controller.animateCamera(CameraUpdate.newCameraPosition(
-        CameraPosition(target: LatLng(pos.latitude, pos.longitude), zoom: 15)));
+    controller.animateCamera(CameraUpdate.newCameraPosition(CameraPosition(target: LatLng(pos.latitude, pos.longitude), zoom: 15)));
   }
 
   // timerCounter() async {
@@ -53,8 +52,7 @@ class _RecordMainState extends State<RecordMain> {
   //   });
   // }
 
-  static final CameraPosition initial =
-      CameraPosition(target: LatLng(51.453318, -0.102559), zoom: 16);
+  static final CameraPosition initial = CameraPosition(target: LatLng(51.453318, -0.102559), zoom: 16);
 
   // PARENT WIDGET, HOLDS ALL WIDGETS
   Widget build(BuildContext context) {
@@ -68,15 +66,11 @@ class _RecordMainState extends State<RecordMain> {
       // PARENT APP BAR
       appBar: AppBar(
         backgroundColor: Color(bgDark),
-        title: Text("RECORD",
-            style: TextStyle(fontSize: deviceHeight / 20, color: Colors.white)),
+        title: Text("RECORD", style: TextStyle(fontSize: deviceHeight / 20, color: Colors.white)),
         elevation: 0.0,
         actions: <Widget>[
           // SETTINGS ICON
-          IconButton(
-              icon: Icon(Icons.settings, color: Colors.white),
-              onPressed: null,
-              iconSize: deviceHeight / 20)
+          IconButton(icon: Icon(Icons.settings, color: Colors.white), onPressed: null, iconSize: deviceHeight / 20)
         ],
       ),
       // PAGE BODY
@@ -95,22 +89,14 @@ class _RecordMainState extends State<RecordMain> {
         Stack(children: <Widget>[
           Container(
             // PARENT CONTAINER
-            decoration: new BoxDecoration(
-                color: Color(bgDark),
-                borderRadius: new BorderRadius.only(
-                    topLeft: const Radius.circular(15.0),
-                    topRight: const Radius.circular(15.0))),
+            decoration: new BoxDecoration(color: Color(bgDark), borderRadius: new BorderRadius.only(topLeft: const Radius.circular(15.0), topRight: const Radius.circular(15.0))),
             height: deviceHeight / 2 - (56 + statusHeight) - deviceHeight / 10,
           ),
           Container(
             // BREAKPOINT FOR SOME BULLSHIT I CANT FUCKING REMEMBER
             // too bad !
             height: deviceHeight / 18,
-            decoration: new BoxDecoration(
-                color: Color(bgDark),
-                borderRadius: new BorderRadius.only(
-                    topLeft: const Radius.circular(0.0),
-                    topRight: const Radius.circular(0.0))),
+            decoration: new BoxDecoration(color: Color(bgDark), borderRadius: new BorderRadius.only(topLeft: const Radius.circular(0.0), topRight: const Radius.circular(0.0))),
           ),
           Positioned.fill(
             top: deviceHeight / 18,

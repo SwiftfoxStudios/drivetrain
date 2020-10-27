@@ -203,46 +203,6 @@ class _GenerateRoutePageState extends State<GenerateRoutePage> {
   List<LatLng> polylineCoords = [];
   Map<PolylineId, Polyline> polylines = {};
 
-  _createPolylines(start, dest) async {
-    print("hello");
-    /*
-        DESC: Creates points to be shown on the map page
-        PARAMS: Start pos, Destination pos
-        RETURNS: Update list of polyline points
-    */
-    polylinePoints = PolylinePoints();
-    PolylineResult result = await polylinePoints.getRouteBetweenCoordinates(
-      "AIzaSyDIjNLerMn_mn006T9_DLAQuyzuC_8FWiA", // API Key
-      PointLatLng(start.latitude, start.longitude),
-      PointLatLng(dest.latitude, dest.longitude),
-      travelMode: TravelMode.driving,
-    );
-
-    // Adding the coordinates to the list
-    if (result.points.isNotEmpty) {
-      result.points.forEach((PointLatLng point) {
-        polylineCoords.add(LatLng(point.latitude, point.longitude));
-      });
-    }
-
-    // Defining an ID
-    int epoch = DateTime.now().microsecondsSinceEpoch;
-    PolylineId id = PolylineId(epoch.toString());
-
-    // Initializing Polyline
-    Polyline polyline = Polyline(
-      polylineId: id,
-      color: Color(accent),
-      points: polylineCoords,
-      width: 5,
-    );
-
-    // Adding the polyline to the map
-    setState(() {
-      polylines[id] = polyline;
-    });
-  }
-
   static final CameraPosition initial = CameraPosition(target: LatLng(51.453318, -0.102559), zoom: 13);
   Location location = new Location();
   String userAddress;
@@ -342,7 +302,6 @@ class _GenerateRoutePageState extends State<GenerateRoutePage> {
         PARAMS: Point user clicks on
         RETURNS: Marker on map at position of click
     */
-    print(point);
     setState(() {
       markerList = [];
       HapticFeedback.heavyImpact();
@@ -377,7 +336,7 @@ class _GenerateRoutePageState extends State<GenerateRoutePage> {
     return theta * pi / 180;
   }
 
-  List calculatePoint(lat1, lon1, bearing, distance) {
+  List<double> calculatePoint(double lat1, double lon1, bearing, distance) {
     double lat1Rad = deg2rad(lat1);
     double lon1Rad = deg2rad(lon1);
     double bearingRad = deg2rad(bearing);
@@ -399,10 +358,55 @@ class _GenerateRoutePageState extends State<GenerateRoutePage> {
 
     lat2 = rad2deg(rlat);
     lon2 = rad2deg(rlon);
-    return [lat2.toStringAsFixed(5), lon2.toStringAsFixed(5)];
+    return [lat2, lon2];
+  }
+
+  _createPolylines(start, dest) async {
+    /*
+        DESC: Creates points to be shown on the map page
+        PARAMS: Start pos, Destination pos
+        RETURNS: Update list of polyline points
+    */
+    polylinePoints = PolylinePoints();
+    PolylineResult result = await polylinePoints.getRouteBetweenCoordinates(
+      "AIzaSyDIjNLerMn_mn006T9_DLAQuyzuC_8FWiA", // API Key
+      PointLatLng(start.latitude, start.longitude),
+      PointLatLng(dest.latitude, dest.longitude),
+      travelMode: TravelMode.bicycling,
+    );
+
+    // Adding the coordinates to the list
+    if (result.points.isNotEmpty) {
+      result.points.forEach((PointLatLng point) {
+        polylineCoords.add(LatLng(point.latitude, point.longitude));
+      });
+    }
+
+    // Defining an ID
+    int epoch = DateTime.now().microsecondsSinceEpoch;
+    PolylineId id = PolylineId(epoch.toString());
+
+    // Initializing Polyline
+    Polyline polyline = Polyline(
+      polylineId: id,
+      color: Color(accent),
+      points: polylineCoords,
+      width: 5,
+    );
+
+    // Adding the polyline to the map
+    setState(() {
+      polylines[id] = polyline;
+    });
+    print(polylineCoords);
   }
 
   generateCircularRoute() {
+    setState(() {
+      polylines.clear();
+      polylineCoords = [];
+    });
+
     String userDistanceInputRaw = initalDistanceController.text;
     num userDistanceInput;
     try {
@@ -415,27 +419,30 @@ class _GenerateRoutePageState extends State<GenerateRoutePage> {
         // turns string into latlng directly by removing 'latlng()'
         startingLocation = startingLocation.substring(7, startingLocation.length - 1);
         List<String> startingLocationList = startingLocation.split(",");
-        List centralPoint = [startingLocationList[0].toString(), startingLocationList[1].toString()];
-        // List centralPoint = calculatePoint(double.parse(startingLocationList[0]), double.parse(startingLocationList[1]), 360 * 1 / 16, userDistanceInput / 2 * pi);
 
-        String centralLat = centralPoint[0];
-        num numCentralLat = num.parse(centralLat);
-        String centralLon = centralPoint[1];
-        num numCentralLon = num.parse(centralLon);
+        List<double> startPoint = [double.parse(startingLocationList[0]), double.parse(startingLocationList[1])];
+        LatLng startCoords = LatLng(startPoint[0], startPoint[1]);
 
-        List oldPoint = calculatePoint(numCentralLat, numCentralLon, 360 * 1 / 16, userDistanceInput / (2 * pi));
-        List newPoint;
-        LatLng setDestinationPoint;
-        LatLng setOriginPoint = LatLng(double.parse(oldPoint[0]), double.parse(oldPoint[1]));
-        for (var i = 2; i <= 16; i++) {
-          newPoint = calculatePoint(numCentralLat, numCentralLon, 360 * i / 16, userDistanceInput / (2 * pi));
-          setDestinationPoint = LatLng(double.parse(oldPoint[0]), double.parse(oldPoint[1]));
-          print(i);
-          _createPolylines(setOriginPoint, setDestinationPoint);
-          print(polylines);
+        List<double> destPoint = calculatePoint(startPoint[0], startPoint[1], 200, userDistanceInput / (2 * pi));
+        LatLng destCoords = LatLng(destPoint[0], destPoint[1]);
 
-          oldPoint = newPoint;
-        }
+        _createPolylines(startCoords, destCoords);
+
+        startPoint = destPoint;
+        startCoords = destCoords;
+
+        destPoint = calculatePoint(startPoint[0], startPoint[1], 40, userDistanceInput / (2 * pi));
+        destCoords = LatLng(destPoint[0], destPoint[1]);
+
+        _createPolylines(startCoords, destCoords);
+
+        startPoint = destPoint;
+        startCoords = destCoords;
+
+        destPoint = [double.parse(startingLocationList[0]), double.parse(startingLocationList[1])];
+        destCoords = LatLng(destPoint[0], destPoint[1]);
+
+        _createPolylines(startCoords, destCoords);
       } on RangeError {
         showUnselectedError();
       }
