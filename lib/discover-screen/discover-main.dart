@@ -2,6 +2,8 @@
 import 'dart:math';
 import 'dart:core';
 
+import '../secrets/keys.dart';
+
 import 'package:flutter/material.dart';
 
 import 'dart:async';
@@ -208,6 +210,8 @@ class _GenerateRoutePageState extends State<GenerateRoutePage> {
   String userAddress;
   List<Marker> markerList = [];
 
+  void apiKey() {}
+
 // SETS INITIAL CAMERA POSITION OF GOOGLE MAP
   Future<void> moveCamera() async {
     var pos = await location.getLocation();
@@ -369,7 +373,7 @@ class _GenerateRoutePageState extends State<GenerateRoutePage> {
     */
     polylinePoints = PolylinePoints();
     PolylineResult result = await polylinePoints.getRouteBetweenCoordinates(
-      "AIzaSyDIjNLerMn_mn006T9_DLAQuyzuC_8FWiA", // API Key
+      Keys.returnKey(), // API Key
       PointLatLng(start.latitude, start.longitude),
       PointLatLng(dest.latitude, dest.longitude),
       travelMode: TravelMode.bicycling,
@@ -398,7 +402,8 @@ class _GenerateRoutePageState extends State<GenerateRoutePage> {
     setState(() {
       polylines[id] = polyline;
     });
-    print(polylineCoords);
+    print("hello");
+    print(polyline.points);
   }
 
   generateCircularRoute() {
@@ -423,18 +428,20 @@ class _GenerateRoutePageState extends State<GenerateRoutePage> {
         List<double> startPoint = [double.parse(startingLocationList[0]), double.parse(startingLocationList[1])];
         LatLng startCoords = LatLng(startPoint[0], startPoint[1]);
 
-        List<double> destPoint = calculatePoint(startPoint[0], startPoint[1], 200, userDistanceInput / (2 * pi));
+        List<double> destPoint = calculatePoint(startPoint[0], startPoint[1], 0, userDistanceInput / (2 * pi));
         LatLng destCoords = LatLng(destPoint[0], destPoint[1]);
 
         _createPolylines(startCoords, destCoords);
 
-        startPoint = destPoint;
-        startCoords = destCoords;
+        for (var i = 1; i < 4; i++) {
+          startPoint = destPoint;
+          startCoords = destCoords;
 
-        destPoint = calculatePoint(startPoint[0], startPoint[1], 40, userDistanceInput / (2 * pi));
-        destCoords = LatLng(destPoint[0], destPoint[1]);
+          destPoint = calculatePoint(startPoint[0], startPoint[1], 360 / 4 * i, userDistanceInput / (2 * pi));
+          destCoords = LatLng(destPoint[0], destPoint[1]);
 
-        _createPolylines(startCoords, destCoords);
+          _createPolylines(startCoords, destCoords);
+        }
 
         startPoint = destPoint;
         startCoords = destCoords;
