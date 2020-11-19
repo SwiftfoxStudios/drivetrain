@@ -26,13 +26,13 @@ class _RecordMainState extends State<RecordMain> {
   Completer<GoogleMapController> _controller = Completer();
 
   Location location = Location();
-  int _selectedIndex = 1;
+  int _isFullScreenIndex = 1;
   bool isSwitched = false;
 
 // SETS INITIAL PAGE OF NAVIGATION BAR
   void navigatePage(int index) {
     setState(() {
-      _selectedIndex = index;
+      _isFullScreenIndex = index;
     });
   }
 
@@ -174,6 +174,8 @@ class _RecordingState extends State<Recording> {
   final duration = const Duration(seconds: 1);
   String displayTime = "0:00";
   String displayDistance = "0.0";
+  String displayVelocity = "0.0";
+  String displayAverageVelocity = "0.0";
   bool clockIsPaused = true;
   Icon isPaused;
   bool started = false;
@@ -184,7 +186,8 @@ class _RecordingState extends State<Recording> {
 
   final Set<Polyline> polyline = {};
   List<LatLng> visitedPoints = [];
-  bool selected = false;
+  bool isFullScreen = false;
+  Icon isFullScreenWidget;
 
   static final CameraPosition initial = CameraPosition(target: LatLng(51.453318, -0.102559), zoom: 16);
   _RecordingState(this.travelType);
@@ -204,7 +207,7 @@ class _RecordingState extends State<Recording> {
 
   @override
   dispose() {
-    locationSubscription.cancel();
+    locationSubscription?.cancel();
     super.dispose();
   }
 
@@ -225,6 +228,22 @@ class _RecordingState extends State<Recording> {
       isPaused = Icon(
         Icons.pause,
         color: Colors.white,
+        size: 35.0,
+      );
+    }
+  }
+
+  void checkifFullScreen() {
+    if (!isFullScreen) {
+      isFullScreenWidget = Icon(
+        Icons.fullscreen,
+        color: Colors.black,
+        size: 35.0,
+      );
+    } else {
+      isFullScreenWidget = Icon(
+        Icons.fullscreen_exit,
+        color: Colors.black,
         size: 35.0,
       );
     }
@@ -258,7 +277,9 @@ class _RecordingState extends State<Recording> {
   void startListening() async {
     location.changeSettings(distanceFilter: 5, accuracy: LocationAccuracy.high);
     locationSubscription = location.onLocationChanged.listen((LocationData positionUpdate) {
-      updatePosition(positionUpdate.latitude, positionUpdate.longitude);
+      updatePosition(positionUpdate.latitude, positionUpdate.longitude, positionUpdate.altitude);
+      updateVelocity(positionUpdate.speed);
+      updateAverageVelocity(displayDistance, displayTime);
     });
   }
 
@@ -267,14 +288,19 @@ class _RecordingState extends State<Recording> {
     locationSubscription.cancel();
   }
 
-  updatePosition(double finalLat, double finalLon) async {
+  updatePosition(double finalLat, double finalLon, double finalAltitude) async {
     print(visitedPoints);
     double initialLat;
     double initialLon;
+    LatLng startPoint;
+    LatLng finalPoint = LatLng(finalLat, finalLon);
+    double startAltitude;
     if (!started) {
       var initialPosition = await location.getLocation();
       initialLat = initialPosition.latitude;
       initialLon = initialPosition.longitude;
+      startPoint = LatLng(initialPosition.latitude, initialPosition.longitude);
+      startAltitude = initialPosition.altitude;
       setState(() {
         visitedPoints.add(LatLng(initialPosition.latitude, initialPosition.longitude));
       });
@@ -282,11 +308,16 @@ class _RecordingState extends State<Recording> {
     } else {
       initialLat = cachedLat;
       initialLon = cachedLon;
+      startPoint = LatLng(cachedLat, cachedLon);
       setState(() {
-        visitedPoints.add(LatLng(cachedLat, cachedLon));
+        visitedPoints.add(startPoint);
       });
     }
+
     cachedDistance = calculateDistance(initialLat, initialLon, finalLat, finalLon);
+
+    calculateAngleOfIncline(cachedDistance, startAltitude, finalAltitude);
+
     journeyDistance += cachedDistance;
     print(journeyDistance.round());
     setState(() {
@@ -311,6 +342,34 @@ class _RecordingState extends State<Recording> {
     double returnedDistance = earthRadius * angularDistance;
     return returnedDistance;
     // Returned value is in metres
+  }
+
+  void updateVelocity(double estimatedVelocity) {
+    setState(() {
+      displayVelocity = estimatedVelocity.toString();
+    });
+  }
+
+  void updateAverageVelocity(String elapsedDistance, String elapsedTime) {
+    double distance = double.parse(elapsedDistance);
+    double time = double.parse(elapsedTime);
+    double averageVelocity = distance / time;
+    setState(() {
+      displayAverageVelocity = averageVelocity.toStringAsFixed(1);
+    });
+  }
+
+  double calculateAngleOfIncline(double distance, double startAltitude, double endAltitude) {
+    double deltaAltitude = endAltitude - startAltitude;
+    double estimatedIncline = deltaAltitude / distance * 100;
+    return estimatedIncline;
+  }
+
+  void calculatePowerOutput() {
+    double normalForce;
+    // Prr = Coefficient of rolling resistance * Normal force * Velocity
+    // Normal force assumes not turning left/right
+    double powerToOvercomeRollingResistance = (0.008 * double.parse(displayVelocity) * normalForce);
   }
 
   Future<bool> showReturnError() {
@@ -357,6 +416,7 @@ class _RecordingState extends State<Recording> {
   Widget build(BuildContext context) {
     parseType();
     checkPaused();
+    checkifFullScreen();
     moveCamera();
     addPoly();
     final deviceHeight = MediaQuery.of(context).size.height;
@@ -372,7 +432,7 @@ class _RecordingState extends State<Recording> {
             AnimatedContainer(
                 duration: Duration(milliseconds: 200),
                 // GOOGLE MAP CONTAINER
-                height: selected ? 200 : deviceHeight / 1.4,
+                height: isFullScreen ? 200 : deviceHeight / 1.4,
                 child: GoogleMap(
                     initialCameraPosition: initial,
                     zoomControlsEnabled: false,
@@ -386,52 +446,101 @@ class _RecordingState extends State<Recording> {
                 // BREAKPOINT FOR SOME BULLSHIT I CANT FUCKING REMEMBER
                 // too bad !
                 duration: Duration(milliseconds: 200),
-                height: !selected ? deviceHeight - deviceHeight / 1.4 - statusHeight : deviceHeight - statusHeight - 200,
+                height: !isFullScreen ? deviceHeight - deviceHeight / 1.4 - statusHeight : deviceHeight - statusHeight - 200,
                 decoration: new BoxDecoration(color: Color(bgDark)),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
+                child: Stack(
                   children: [
-                    Row(mainAxisAlignment: MainAxisAlignment.spaceEvenly, children: [Text(displayDistance, style: TextStyle(fontSize: deviceHeight / 16, color: Colors.white)), Text(displayTime, style: TextStyle(fontSize: deviceHeight / 16, color: Colors.white))]),
-                    Row(mainAxisAlignment: MainAxisAlignment.spaceEvenly, children: [Text("KM", style: TextStyle(fontSize: deviceHeight / 30, color: Colors.white)), Text("TIME", style: TextStyle(fontSize: deviceHeight / 30, color: Colors.white))]),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                      children: [
-                        RawMaterialButton(
-                          onPressed: () {
-                            setState(() {
-                              selected = !selected;
-                            });
-                            if (clockIsPaused) {
-                              startListening();
+                    // ONLY VISIBLE ON FULLSCREEN
+                    AnimatedContainer(
+                        // distance & time
+                        duration: Duration(milliseconds: 200),
+                        padding: isFullScreen ? EdgeInsets.only(top: 260) : EdgeInsets.only(top: 0),
+                        child: isFullScreen
+                            ? AnimatedAlign(
+                                duration: Duration(milliseconds: 200),
+                                alignment: isFullScreen ? Alignment.topCenter : Alignment.center,
+                                child: Row(mainAxisAlignment: MainAxisAlignment.spaceEvenly, children: [
+                                  Text(displayVelocity, style: TextStyle(fontSize: deviceHeight / 16, color: Colors.white)),
+                                  Text(displayAverageVelocity, style: TextStyle(fontSize: deviceHeight / 16, color: Colors.white))
+                                ]))
+                            : null),
+                    AnimatedContainer(
+                        // speed titles
+                        duration: Duration(milliseconds: 200),
+                        padding: isFullScreen ? EdgeInsets.only(top: 230) : EdgeInsets.only(top: 0),
+                        child: isFullScreen
+                            ? AnimatedAlign(
+                                duration: Duration(milliseconds: 200),
+                                alignment: isFullScreen ? Alignment.topCenter : Alignment.center,
+                                child: Row(mainAxisAlignment: MainAxisAlignment.spaceEvenly, children: [
+                                  Text("KM/H", style: TextStyle(fontSize: deviceHeight / 30, color: Colors.white)),
+                                  Text("AVG", style: TextStyle(fontSize: deviceHeight / 30, color: Colors.white))
+                                ]))
+                            : null),
+                    // ALWAYS VISIBLE
+                    AnimatedContainer(
+                        // distance & time
+                        duration: Duration(milliseconds: 200),
+                        padding: isFullScreen ? EdgeInsets.only(bottom: 150) : EdgeInsets.only(bottom: 60),
+                        child: AnimatedAlign(
+                            duration: Duration(milliseconds: 200),
+                            alignment: isFullScreen ? Alignment.bottomCenter : Alignment.center,
+                            child: Row(mainAxisAlignment: MainAxisAlignment.spaceEvenly, children: [
+                              Text(displayDistance, style: TextStyle(fontSize: deviceHeight / 16, color: Colors.white)),
+                              Text(displayTime, style: TextStyle(fontSize: deviceHeight / 16, color: Colors.white))
+                            ]))),
+                    AnimatedContainer(
+                        // distance & time titles
+                        duration: Duration(milliseconds: 200),
+                        padding: isFullScreen ? EdgeInsets.only(bottom: 210) : EdgeInsets.only(top: 10),
+                        child: AnimatedAlign(
+                            duration: Duration(milliseconds: 200),
+                            alignment: isFullScreen ? Alignment.bottomCenter : Alignment.topCenter,
+                            child: Row(mainAxisAlignment: MainAxisAlignment.spaceEvenly, children: [
+                              Text("KM", style: TextStyle(fontSize: deviceHeight / 30, color: Colors.white)),
+                              Text("TIME", style: TextStyle(fontSize: deviceHeight / 30, color: Colors.white))
+                            ]))),
+                    AnimatedContainer(
+                        padding: isFullScreen ? EdgeInsets.only(bottom: 50) : EdgeInsets.only(bottom: 20),
+                        duration: Duration(milliseconds: 200),
+                        child: Align(
+                            alignment: Alignment.bottomCenter,
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                              children: [
+                                RawMaterialButton(
+                                  onPressed: () {
+                                    if (clockIsPaused) {
+                                      startListening();
 
-                              clock.start();
-                              startClock();
-                            } else {
-                              stopListening();
-                              clock.stop();
-                              pauseClock();
-                            }
-                          },
-                          elevation: 2.0,
-                          fillColor: Color(accent),
-                          child: isPaused,
-                          padding: EdgeInsets.all(15.0),
-                          shape: CircleBorder(),
-                        ),
-                        RawMaterialButton(
-                          onPressed: () {},
-                          elevation: 2.0,
-                          fillColor: Colors.white,
-                          child: Icon(
-                            Icons.fullscreen,
-                            color: Colors.black,
-                            size: 35.0,
-                          ),
-                          padding: EdgeInsets.all(15.0),
-                          shape: CircleBorder(),
-                        ),
-                      ],
-                    )
+                                      clock.start();
+                                      startClock();
+                                    } else {
+                                      stopListening();
+                                      clock.stop();
+                                      pauseClock();
+                                    }
+                                  },
+                                  elevation: 2.0,
+                                  fillColor: Color(accent),
+                                  child: isPaused,
+                                  padding: EdgeInsets.all(15.0),
+                                  shape: CircleBorder(),
+                                ),
+                                RawMaterialButton(
+                                  onPressed: () {
+                                    setState(() {
+                                      isFullScreen = !isFullScreen;
+                                    });
+                                  },
+                                  elevation: 2.0,
+                                  fillColor: Colors.white,
+                                  child: isFullScreenWidget,
+                                  padding: EdgeInsets.all(15.0),
+                                  shape: CircleBorder(),
+                                ),
+                              ],
+                            )))
                   ],
                 ),
               ),

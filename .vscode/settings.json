@@ -1,4 +1,4 @@
 {
     "html.format.wrapLineLength": 0,
-    "dart.lineLength": 1000
+    "dart.lineLength": 200
 }
