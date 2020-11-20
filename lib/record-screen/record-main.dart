@@ -176,6 +176,10 @@ class _RecordingState extends State<Recording> {
   String displayDistance = "0.0";
   String displayVelocity = "0.0";
   String displayAverageVelocity = "0.0";
+  String displayIncline = "0";
+  String displayPower = "0";
+  double riderMass = 57;
+  double bikeMass = 10.9;
   bool clockIsPaused = true;
   Icon isPaused;
   bool started = false;
@@ -345,8 +349,9 @@ class _RecordingState extends State<Recording> {
   }
 
   void updateVelocity(double estimatedVelocity) {
+    estimatedVelocity = estimatedVelocity * 18 / 5;
     setState(() {
-      displayVelocity = estimatedVelocity.toString();
+      displayVelocity = estimatedVelocity.toStringAsFixed(1);
     });
   }
 
@@ -362,14 +367,26 @@ class _RecordingState extends State<Recording> {
   double calculateAngleOfIncline(double distance, double startAltitude, double endAltitude) {
     double deltaAltitude = endAltitude - startAltitude;
     double estimatedIncline = deltaAltitude / distance * 100;
-    return estimatedIncline;
+    setState(() {
+      displayIncline = estimatedIncline.toStringAsFixed(0);
+    });
   }
 
   void calculatePowerOutput() {
-    double normalForce;
+    // Nf = mgcos(x)
+    double normalForce = (riderMass + bikeMass) * 9.81 * cos(atan(double.parse(displayIncline) / 100));
+    double velocity = double.parse(displayVelocity);
     // Prr = Coefficient of rolling resistance * Normal force * Velocity
     // Normal force assumes not turning left/right
-    double powerToOvercomeRollingResistance = (0.008 * double.parse(displayVelocity) * normalForce);
+    double powerToOvercomeRollingResistance = (0.008 * velocity * normalForce);
+    // Pw = 0.5 * density of air (roughly 1.22) * velocity^3 * drag coefficient * frontal area
+    double powerToOvercomeAirResistance = (0.5 * 1.22 * pow(velocity, 3) * 0.7 * 0.59);
+    // Pg = mass * g * sin(arctan(grade)) * velocity
+    double powerToOvercomeGravity = (riderMass + bikeMass) * 9.81 * sin(atan(double.parse(displayIncline) / 100));
+    double powerEstimate = powerToOvercomeRollingResistance + powerToOvercomeAirResistance + powerToOvercomeGravity;
+    setState(() {
+      displayPower = powerEstimate.toStringAsFixed(0);
+    });
   }
 
   Future<bool> showReturnError() {
@@ -452,7 +469,33 @@ class _RecordingState extends State<Recording> {
                   children: [
                     // ONLY VISIBLE ON FULLSCREEN
                     AnimatedContainer(
-                        // distance & time
+                        // velocity & avg velocity
+                        duration: Duration(milliseconds: 200),
+                        padding: isFullScreen ? EdgeInsets.only(top: 90) : EdgeInsets.only(top: 0),
+                        child: isFullScreen
+                            ? AnimatedAlign(
+                                duration: Duration(milliseconds: 200),
+                                alignment: isFullScreen ? Alignment.topCenter : Alignment.center,
+                                child: Row(mainAxisAlignment: MainAxisAlignment.spaceEvenly, children: [
+                                  Text(displayPower + "W", style: TextStyle(fontSize: deviceHeight / 16, color: Colors.white)),
+                                  Text(displayIncline + "%", style: TextStyle(fontSize: deviceHeight / 16, color: Colors.white))
+                                ]))
+                            : null),
+                    AnimatedContainer(
+                        // speed titles
+                        duration: Duration(milliseconds: 200),
+                        padding: isFullScreen ? EdgeInsets.only(top: 60) : EdgeInsets.only(top: 0),
+                        child: isFullScreen
+                            ? AnimatedAlign(
+                                duration: Duration(milliseconds: 200),
+                                alignment: isFullScreen ? Alignment.topCenter : Alignment.center,
+                                child: Row(mainAxisAlignment: MainAxisAlignment.spaceEvenly, children: [
+                                  Text("POWER", style: TextStyle(fontSize: deviceHeight / 30, color: Colors.white)),
+                                  Text("INCLINE", style: TextStyle(fontSize: deviceHeight / 30, color: Colors.white))
+                                ]))
+                            : null),
+                    AnimatedContainer(
+                        // velocity & avg velocity
                         duration: Duration(milliseconds: 200),
                         padding: isFullScreen ? EdgeInsets.only(top: 260) : EdgeInsets.only(top: 0),
                         child: isFullScreen
@@ -460,8 +503,7 @@ class _RecordingState extends State<Recording> {
                                 duration: Duration(milliseconds: 200),
                                 alignment: isFullScreen ? Alignment.topCenter : Alignment.center,
                                 child: Row(mainAxisAlignment: MainAxisAlignment.spaceEvenly, children: [
-                                  Text(displayVelocity, style: TextStyle(fontSize: deviceHeight / 16, color: Colors.white)),
-                                  Text(displayAverageVelocity, style: TextStyle(fontSize: deviceHeight / 16, color: Colors.white))
+                                  Text(displayVelocity + " KM/H", style: TextStyle(fontSize: deviceHeight / 16, color: Colors.white)),
                                 ]))
                             : null),
                     AnimatedContainer(
@@ -473,8 +515,7 @@ class _RecordingState extends State<Recording> {
                                 duration: Duration(milliseconds: 200),
                                 alignment: isFullScreen ? Alignment.topCenter : Alignment.center,
                                 child: Row(mainAxisAlignment: MainAxisAlignment.spaceEvenly, children: [
-                                  Text("KM/H", style: TextStyle(fontSize: deviceHeight / 30, color: Colors.white)),
-                                  Text("AVG", style: TextStyle(fontSize: deviceHeight / 30, color: Colors.white))
+                                  Text("SPEED", style: TextStyle(fontSize: deviceHeight / 30, color: Colors.white)),
                                 ]))
                             : null),
                     // ALWAYS VISIBLE
@@ -486,7 +527,7 @@ class _RecordingState extends State<Recording> {
                             duration: Duration(milliseconds: 200),
                             alignment: isFullScreen ? Alignment.bottomCenter : Alignment.center,
                             child: Row(mainAxisAlignment: MainAxisAlignment.spaceEvenly, children: [
-                              Text(displayDistance, style: TextStyle(fontSize: deviceHeight / 16, color: Colors.white)),
+                              Text(displayDistance + "KM", style: TextStyle(fontSize: deviceHeight / 16, color: Colors.white)),
                               Text(displayTime, style: TextStyle(fontSize: deviceHeight / 16, color: Colors.white))
                             ]))),
                     AnimatedContainer(
@@ -497,7 +538,7 @@ class _RecordingState extends State<Recording> {
                             duration: Duration(milliseconds: 200),
                             alignment: isFullScreen ? Alignment.bottomCenter : Alignment.topCenter,
                             child: Row(mainAxisAlignment: MainAxisAlignment.spaceEvenly, children: [
-                              Text("KM", style: TextStyle(fontSize: deviceHeight / 30, color: Colors.white)),
+                              Text("DISTANCE", style: TextStyle(fontSize: deviceHeight / 30, color: Colors.white)),
                               Text("TIME", style: TextStyle(fontSize: deviceHeight / 30, color: Colors.white))
                             ]))),
                     AnimatedContainer(
