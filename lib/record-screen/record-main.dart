@@ -8,7 +8,11 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:flutter/services.dart';
 import 'package:location/location.dart';
 
-import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:gpx/gpx.dart';
+
+import '../activityClass.dart';
+import 'package:path/path.dart' as p;
+import 'package:sqflite/sqflite.dart';
 
 // COLOURS USED IN PROJECT
 const bgDark = 0xff202020;
@@ -27,7 +31,7 @@ class _RecordMainState extends State<RecordMain> {
 
   Location location = Location();
   int _isFullScreenIndex = 1;
-  bool isSwitched = false;
+  bool routeTypeisSwitched = false;
 
 // SETS INITIAL PAGE OF NAVIGATION BAR
   void navigatePage(int index) {
@@ -38,7 +42,7 @@ class _RecordMainState extends State<RecordMain> {
 
   recordActivity() {
     Navigator.of(context).push(MaterialPageRoute(
-      builder: (context) => Recording(travelType: isSwitched),
+      builder: (context) => Recording(travelType: routeTypeisSwitched),
     ));
   }
 
@@ -119,10 +123,10 @@ class _RecordMainState extends State<RecordMain> {
                     children: <Widget>[
                       Icon(Icons.directions_bike, color: Colors.white),
                       Switch(
-                        value: isSwitched,
+                        value: routeTypeisSwitched,
                         onChanged: (value) {
                           setState(() {
-                            isSwitched = value;
+                            routeTypeisSwitched = value;
                           });
                         },
                         inactiveTrackColor: Colors.white,
@@ -168,12 +172,12 @@ class _RecordingState extends State<Recording> {
   Location location = Location();
   bool travelType;
   Color testVal;
-  FlutterLocalNotificationsPlugin notifPlugin;
 
   var clock = Stopwatch();
   final duration = const Duration(seconds: 1);
   String displayTime = "0:00";
-  String displayDistance = "0.0";
+  int displayTimeInSeconds = 0;
+  String displayDistance = "0.3";
   String displayVelocity = "0.0";
   String displayAverageVelocity = "0.0";
   String displayIncline = "0";
@@ -192,6 +196,8 @@ class _RecordingState extends State<Recording> {
   List<LatLng> visitedPoints = [];
   bool isFullScreen = false;
   Icon isFullScreenWidget;
+  final gpx = Gpx();
+  List<Wpt> listOfGPXPoints;
 
   static final CameraPosition initial = CameraPosition(target: LatLng(51.453318, -0.102559), zoom: 16);
   _RecordingState(this.travelType);
@@ -275,15 +281,18 @@ class _RecordingState extends State<Recording> {
       } else {
         displayTime = elapsedHours.toString() + ":" + elapsedMinutes.toString().padLeft(2, "0") + ":" + elapsedSeconds.toString().padLeft(2, "0");
       }
+      displayTimeInSeconds = clock.elapsed.inSeconds;
     });
+    print(displayTimeInSeconds);
   }
 
   void startListening() async {
-    location.changeSettings(distanceFilter: 5, accuracy: LocationAccuracy.high);
+    gpx.metadata = Metadata(name: DateTime.now().millisecondsSinceEpoch.toString(), time: DateTime.now());
+    location.changeSettings(distanceFilter: 10, accuracy: LocationAccuracy.high);
     locationSubscription = location.onLocationChanged.listen((LocationData positionUpdate) {
       updatePosition(positionUpdate.latitude, positionUpdate.longitude, positionUpdate.altitude);
       updateVelocity(positionUpdate.speed);
-      updateAverageVelocity(displayDistance, displayTime);
+      updateAverageVelocity(displayDistance, displayTimeInSeconds);
     });
   }
 
@@ -292,27 +301,32 @@ class _RecordingState extends State<Recording> {
     locationSubscription.cancel();
   }
 
-  updatePosition(double finalLat, double finalLon, double finalAltitude) async {
+  void updatePosition(double finalLat, double finalLon, double finalAltitude) async {
     print(visitedPoints);
     double initialLat;
     double initialLon;
     LatLng startPoint;
     LatLng finalPoint = LatLng(finalLat, finalLon);
     double startAltitude;
-    if (!started) {
-      var initialPosition = await location.getLocation();
-      initialLat = initialPosition.latitude;
-      initialLon = initialPosition.longitude;
-      startPoint = LatLng(initialPosition.latitude, initialPosition.longitude);
-      startAltitude = initialPosition.altitude;
-      setState(() {
-        visitedPoints.add(LatLng(initialPosition.latitude, initialPosition.longitude));
+    if (started == false) {
+      await location.getLocation().then((onValue) {
+        initialLat = onValue.latitude;
+        initialLon = onValue.longitude;
+        startAltitude = onValue.altitude;
       });
+      startPoint = LatLng(initialLat, initialLon);
+      setState(() {
+        visitedPoints.add(startPoint);
+      });
+
+      listOfGPXPoints.add(Wpt(lat: initialLat, lon: initialLon, ele: startAltitude, time: DateTime.now()));
       started = true;
     } else {
       initialLat = cachedLat;
       initialLon = cachedLon;
+      startAltitude = finalAltitude;
       startPoint = LatLng(cachedLat, cachedLon);
+      listOfGPXPoints.add(Wpt(lat: initialLat, lon: initialLon, ele: startAltitude, time: DateTime.now()));
       setState(() {
         visitedPoints.add(startPoint);
       });
@@ -320,12 +334,14 @@ class _RecordingState extends State<Recording> {
 
     cachedDistance = calculateDistance(initialLat, initialLon, finalLat, finalLon);
 
+    print(startAltitude);
+    print(finalAltitude);
     calculateAngleOfIncline(cachedDistance, startAltitude, finalAltitude);
 
     journeyDistance += cachedDistance;
-    print(journeyDistance.round());
+    print(journeyDistance.round() / 1000);
     setState(() {
-      displayDistance = (journeyDistance.round() / 1000).toStringAsFixed(2);
+      displayDistance = (journeyDistance.round() / 1000).toStringAsFixed(1);
     });
   }
 
@@ -355,16 +371,17 @@ class _RecordingState extends State<Recording> {
     });
   }
 
-  void updateAverageVelocity(String elapsedDistance, String elapsedTime) {
+  void updateAverageVelocity(String elapsedDistance, int elapsedTime) {
     double distance = double.parse(elapsedDistance);
-    double time = double.parse(elapsedTime);
+    double time = elapsedTime / 3600;
     double averageVelocity = distance / time;
     setState(() {
       displayAverageVelocity = averageVelocity.toStringAsFixed(1);
     });
   }
 
-  double calculateAngleOfIncline(double distance, double startAltitude, double endAltitude) {
+/* NEED TO EDIT BELOW FN TO ACCOUNT FOR DEVICES WITHOUT BAROMETER */
+  void calculateAngleOfIncline(double distance, double startAltitude, double endAltitude) {
     double deltaAltitude = endAltitude - startAltitude;
     double estimatedIncline = deltaAltitude / distance * 100;
     setState(() {
@@ -423,6 +440,84 @@ class _RecordingState extends State<Recording> {
     );
   }
 
+  showNullRouteError() {
+    /*
+        DESC: Catches empty distance counter
+        PARAMS: null
+        RETURNS: Error dialog box
+    */
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: new Text("No route recorded"),
+          backgroundColor: Colors.white,
+          content: new Text("Please start an activity to start the route counting."),
+          actions: <Widget>[
+            new FlatButton(
+              child: new Text("CLOSE"),
+              color: Color(accent),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Future<bool> showUserConfirmDialog() {
+    /*
+        DESC: Catches user pressing back button
+        PARAMS: null
+        RETURNS: Error dialog box
+    */
+    return showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: new Text("Are you sure you want to end this recording?"),
+          backgroundColor: Colors.white,
+          content: new Text("This will stop your recording and save it in the app."),
+          actions: <Widget>[
+            FlatButton(
+              child: new Text("DISCARD ROUTE"),
+              color: Color(accent),
+              onPressed: () {
+                Navigator.of(context).pop(true);
+                Navigator.of(context).pop(true);
+              },
+            ),
+            FlatButton(
+              child: new Text("KEEP RECORDING"),
+              textColor: Colors.black,
+              color: Colors.yellow,
+              onPressed: () {
+                Navigator.of(context).pop(false);
+              },
+            ),
+            FlatButton(
+              child: new Text("SAVE ROUTE"),
+              color: Colors.green,
+              onPressed: () {
+                Navigator.of(context).pop(true);
+                Navigator.of(context).pop(true);
+                Navigator.of(context).push(MaterialPageRoute(
+                    builder: (context) => SaveRoutePage(
+                          fDistance: displayDistance,
+                          fTime: displayTimeInSeconds,
+                          fVelocity: displayAverageVelocity,
+                          riderMass: riderMass,
+                        )));
+              },
+            )
+          ],
+        );
+      },
+    );
+  }
+
   void addPoly() {
     PolylineId id = PolylineId("test");
     setState(() {
@@ -436,6 +531,7 @@ class _RecordingState extends State<Recording> {
     checkifFullScreen();
     moveCamera();
     addPoly();
+
     final deviceHeight = MediaQuery.of(context).size.height;
     final deviceWidth = MediaQuery.of(context).size.width;
     final statusHeight = MediaQuery.of(context).padding.top;
@@ -570,6 +666,28 @@ class _RecordingState extends State<Recording> {
                                 ),
                                 RawMaterialButton(
                                   onPressed: () {
+                                    if (clockIsPaused) {
+                                      if (displayDistance == "0.0") {
+                                        showNullRouteError();
+                                      } else {
+                                        showUserConfirmDialog();
+                                      }
+                                    } else {
+                                      // showConfirmRouteDialog();
+                                    }
+                                  },
+                                  elevation: 2.0,
+                                  fillColor: Color(accent),
+                                  child: Icon(
+                                    Icons.stop,
+                                    color: Colors.white,
+                                    size: 35.0,
+                                  ),
+                                  padding: EdgeInsets.all(15.0),
+                                  shape: CircleBorder(),
+                                ),
+                                RawMaterialButton(
+                                  onPressed: () {
                                     setState(() {
                                       isFullScreen = !isFullScreen;
                                     });
@@ -588,5 +706,308 @@ class _RecordingState extends State<Recording> {
             ]),
           ]),
         ));
+  }
+}
+
+class SaveRoutePage extends StatefulWidget {
+  final String fDistance;
+  final int fTime;
+  final String fVelocity;
+  final double riderMass;
+  SaveRoutePage({this.fDistance, this.fTime, this.fVelocity, this.riderMass});
+  @override
+  _SaveRoutePageState createState() => _SaveRoutePageState();
+}
+
+class _SaveRoutePageState extends State<SaveRoutePage> {
+  double exertionSliderValue = 5;
+  bool privacyisSwitched = false;
+  String activityTitle;
+  String activityDesc;
+
+  final titleController = TextEditingController();
+  final descController = TextEditingController();
+
+  @override
+  void dispose() {
+    titleController.dispose();
+    descController.dispose();
+    super.dispose();
+  }
+
+  // String fDistance;
+  // int fTime;
+  // String fVelocity;
+  // _SaveRoutePageState({this.fDistance, this.fTime, this.fVelocity});
+
+  Future<bool> showReturnError() {
+    /*
+        DESC: Catches user pressing back button
+        PARAMS: null
+        RETURNS: Error dialog box
+    */
+    return showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: new Text("Are you sure you want to exit?"),
+          backgroundColor: Colors.white,
+          content: new Text("This will cancel your route and all progress you've made."),
+          actions: <Widget>[
+            FlatButton(
+              child: new Text("NO"),
+              color: Color(accent),
+              onPressed: () {
+                Navigator.of(context).pop(false);
+              },
+            ),
+            FlatButton(
+              child: new Text("YES, EXIT"),
+              color: Colors.green,
+              onPressed: () {
+                Navigator.of(context).pop(true);
+              },
+            )
+          ],
+        );
+      },
+    );
+  }
+
+  showNullErrorDialog() {
+    /*
+        DESC: Catches null title
+        PARAMS: null
+        RETURNS: Error dialog box
+    */
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: new Text("No Activity Title"),
+          backgroundColor: Colors.white,
+          content: new Text("Enter a title for your activity before publishing."),
+          actions: <Widget>[
+            new FlatButton(
+              child: new Text("CLOSE"),
+              color: Color(accent),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  int calculateCaloriesBurnt(time, mass) {
+    const double metabolicTaskEquivalent = 9.5;
+    double count = (time * metabolicTaskEquivalent * mass / (200 * 60));
+    return count.round();
+  }
+
+  void insertIntoDatabase(Activity activity, Database database) async {
+    await database.rawInsert("INSERT INTO activities(id, title, description, distance, timeElapsed, averageVelocity, caloriesBurnt, isPublic, exertion) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?)", [
+      activity.timestamp,
+      activity.title,
+      activity.description,
+      activity.distance,
+      activity.timeElapsedinSeconds,
+      activity.averageVelocity,
+      activity.caloriesBurnt,
+      activity.isPublic,
+      activity.exertion
+    ]);
+
+    print(await database.rawQuery("SELECT * FROM activities"));
+  }
+
+  void publishActivity(String title, String description) async {
+    if (activityTitle == "" || activityTitle == null) {
+      showNullErrorDialog();
+    } else {
+      Navigator.of(context).pop(true);
+
+      int timestamp = DateTime.now().millisecondsSinceEpoch;
+      double distance = double.parse(widget.fDistance);
+      int time = widget.fTime;
+      double velocity = double.parse(widget.fVelocity);
+      bool isPublic = !privacyisSwitched;
+      int exertion = exertionSliderValue.floor();
+
+      int calories = calculateCaloriesBurnt(time, widget.riderMass);
+
+      final activityObject = Activity(
+          timestamp: timestamp,
+          title: title,
+          description: description,
+          distance: distance,
+          timeElapsedinSeconds: time,
+          averageVelocity: velocity,
+          caloriesBurnt: calories,
+          isPublic: isPublic,
+          exertion: exertion);
+
+      await deleteDatabase(p.join(await getDatabasesPath(), 'activities.db'));
+
+      Database database = await openDatabase(
+        p.join(await getDatabasesPath(), 'activities.db'),
+        onCreate: (db, version) async {
+          await db.execute(
+            "CREATE TABLE activities(id INT PRIMARY KEY, title TEXT, description TEXT, distance REAL, timeElapsed INTEGER, averageVelocity REAL, caloriesBurnt INTEGER, isPublic BOOL, exertion INTEGER)",
+          );
+        },
+        version: 1,
+      );
+
+      insertIntoDatabase(activityObject, database);
+    }
+  }
+
+  Widget build(BuildContext context) {
+    final deviceHeight = MediaQuery.of(context).size.height;
+    final deviceWidth = MediaQuery.of(context).size.width;
+    final statusHeight = MediaQuery.of(context).padding.top;
+
+    return WillPopScope(
+        onWillPop: showReturnError,
+        child: Scaffold(
+            resizeToAvoidBottomInset: false,
+            // PARENT APP BAR
+            appBar: AppBar(
+              backgroundColor: Color(bgDark),
+              title: Text("SAVE ROUTE", style: TextStyle(fontSize: deviceHeight / 20, color: Colors.white)),
+              elevation: 0.0,
+            ),
+            // PAGE BODY
+            body: Container(
+                color: Color(bgDark),
+                child: Column(children: <Widget>[
+                  Container(height: deviceHeight / 50),
+                  Container(
+                      padding: EdgeInsets.fromLTRB(20.0, 12.0, 20.0, 1.0),
+                      child: TextField(
+                          style: TextStyle(fontSize: 20, color: Colors.white),
+                          onSubmitted: (value) {
+                            activityTitle = value;
+                          },
+                          autocorrect: true,
+                          textCapitalization: TextCapitalization.sentences,
+                          controller: titleController,
+                          decoration: InputDecoration(
+                            labelText: "Title",
+                            labelStyle: TextStyle(fontSize: 20, color: Colors.white),
+                            hintStyle: TextStyle(fontSize: 20, color: Colors.white),
+                            enabledBorder: UnderlineInputBorder(
+                              borderSide: BorderSide(color: Color(accent)),
+                            ),
+                            focusedBorder: UnderlineInputBorder(
+                              borderSide: BorderSide(color: Colors.green),
+                            ),
+                          ))),
+                  Container(
+                      padding: EdgeInsets.fromLTRB(20.0, 12.0, 20.0, 20.0),
+                      child: TextField(
+                          style: TextStyle(fontSize: 14, color: Colors.white),
+                          onSubmitted: (value) {
+                            activityDesc = value;
+                          },
+                          autocorrect: true,
+                          textCapitalization: TextCapitalization.sentences,
+                          controller: descController,
+                          decoration: InputDecoration(
+                            labelText: "Description",
+                            labelStyle: TextStyle(fontSize: 14, color: Colors.white),
+                            hintStyle: TextStyle(fontSize: 14, color: Colors.white),
+                            enabledBorder: UnderlineInputBorder(
+                              borderSide: BorderSide(color: Color(accent)),
+                            ),
+                            focusedBorder: UnderlineInputBorder(
+                              borderSide: BorderSide(color: Colors.green),
+                            ),
+                          ))),
+                  Container(height: deviceHeight / 30),
+                  Container(
+                      padding: EdgeInsets.only(left: 20.0),
+                      child: Align(
+                          alignment: Alignment.centerLeft,
+                          child: Text(
+                            "Percieved Exertion:",
+                            style: TextStyle(fontSize: deviceHeight / 40, color: Colors.white),
+                          ))),
+                  Container(
+                      padding: EdgeInsets.only(left: 20.0),
+                      child: Align(
+                          alignment: Alignment.centerLeft,
+                          child: Text(
+                            "(How hard was that activity?)",
+                            style: TextStyle(fontSize: deviceHeight / 70, color: Colors.white),
+                          ))),
+                  Container(
+                      child: Slider(
+                    activeColor: Color(accent),
+                    inactiveColor: Colors.grey,
+                    value: exertionSliderValue,
+                    min: 0,
+                    max: 10,
+                    divisions: 10,
+                    label: exertionSliderValue.round().toString(),
+                    onChanged: (double value) {
+                      setState(() {
+                        exertionSliderValue = value;
+                      });
+                    },
+                  )),
+                  Container(height: deviceHeight / 30),
+                  Container(
+                      padding: EdgeInsets.only(left: 20.0),
+                      child: Align(
+                          alignment: Alignment.centerLeft,
+                          child: Text(
+                            "Activity Visibility:",
+                            style: TextStyle(fontSize: deviceHeight / 40, color: Colors.white),
+                          ))),
+                  Container(
+                      padding: EdgeInsets.all(10.0),
+                      child: Center(
+                          child: Row(
+                        // TOGGLE SWITCH UI
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: <Widget>[
+                          Icon(Icons.lock_outline_sharp, color: Colors.white),
+                          Switch(
+                            value: !privacyisSwitched,
+                            onChanged: (value) {
+                              setState(() {
+                                privacyisSwitched = !value;
+                              });
+                            },
+                            inactiveTrackColor: Colors.white,
+                            inactiveThumbColor: Color(accent),
+                            activeTrackColor: Colors.white,
+                            activeColor: Color(accent),
+                          ),
+                          Icon(Icons.lock_open_sharp, color: Colors.white)
+                        ],
+                      ))),
+                  Container(height: deviceHeight / 20),
+                  Center(
+                    // START RECORDING BUTTON
+                    child: FlatButton(
+                      child: Text(
+                        "PUBLISH",
+                        style: TextStyle(fontSize: 25),
+                      ),
+                      onPressed: () {
+                        publishActivity(titleController.text, descController.text);
+                      },
+                      color: Color(accent),
+                      textColor: Colors.white,
+                      padding: EdgeInsets.fromLTRB(12, 5, 12, 5),
+                      splashColor: Colors.grey,
+                    ),
+                  )
+                ]))));
   }
 }
