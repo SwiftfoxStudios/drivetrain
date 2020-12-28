@@ -50,7 +50,8 @@ class _RecordMainState extends State<RecordMain> {
   Future<void> moveCamera() async {
     var pos = await location.getLocation();
     final GoogleMapController controller = await _controller.future;
-    controller.animateCamera(CameraUpdate.newCameraPosition(CameraPosition(target: LatLng(pos.latitude, pos.longitude), zoom: 15)));
+    controller.animateCamera(
+        CameraUpdate.newCameraPosition(CameraPosition(target: LatLng(pos.latitude, pos.longitude), zoom: 15)));
   }
 
   // timerCounter() async {
@@ -96,14 +97,20 @@ class _RecordMainState extends State<RecordMain> {
         Stack(children: <Widget>[
           Container(
             // PARENT CONTAINER
-            decoration: new BoxDecoration(color: Color(bgDark), borderRadius: new BorderRadius.only(topLeft: const Radius.circular(15.0), topRight: const Radius.circular(15.0))),
+            decoration: new BoxDecoration(
+                color: Color(bgDark),
+                borderRadius:
+                    new BorderRadius.only(topLeft: const Radius.circular(15.0), topRight: const Radius.circular(15.0))),
             height: deviceHeight / 2 - (56 + statusHeight) - deviceHeight / 10,
           ),
           Container(
             // BREAKPOINT FOR SOME BULLSHIT I CANT FUCKING REMEMBER
             // too bad !
             height: deviceHeight / 18,
-            decoration: new BoxDecoration(color: Color(bgDark), borderRadius: new BorderRadius.only(topLeft: const Radius.circular(0.0), topRight: const Radius.circular(0.0))),
+            decoration: new BoxDecoration(
+                color: Color(bgDark),
+                borderRadius:
+                    new BorderRadius.only(topLeft: const Radius.circular(0.0), topRight: const Radius.circular(0.0))),
           ),
           Positioned.fill(
             top: deviceHeight / 18,
@@ -224,7 +231,8 @@ class _RecordingState extends State<Recording> {
   Future<void> moveCamera() async {
     var pos = await location.getLocation();
     final GoogleMapController controller = await _controller.future;
-    controller.animateCamera(CameraUpdate.newCameraPosition(CameraPosition(target: LatLng(pos.latitude, pos.longitude), zoom: 15)));
+    controller.animateCamera(
+        CameraUpdate.newCameraPosition(CameraPosition(target: LatLng(pos.latitude, pos.longitude), zoom: 15)));
   }
 
   void checkPaused() {
@@ -279,7 +287,11 @@ class _RecordingState extends State<Recording> {
       if (elapsedHours == 0) {
         displayTime = elapsedMinutes.toString() + ":" + elapsedSeconds.toString().padLeft(2, "0");
       } else {
-        displayTime = elapsedHours.toString() + ":" + elapsedMinutes.toString().padLeft(2, "0") + ":" + elapsedSeconds.toString().padLeft(2, "0");
+        displayTime = elapsedHours.toString() +
+            ":" +
+            elapsedMinutes.toString().padLeft(2, "0") +
+            ":" +
+            elapsedSeconds.toString().padLeft(2, "0");
       }
       displayTimeInSeconds = clock.elapsed.inSeconds;
     });
@@ -356,7 +368,8 @@ class _RecordingState extends State<Recording> {
     double deltaLat = (lat2 - lat1) * pi / 180;
     double deltaLon = (lon2 - lon1) * pi / 180;
 
-    double angle = sin(deltaLat / 2) * sin(deltaLat / 2) + cos(lat1rad) * cos(lat2rad) * sin(deltaLon / 2) * sin(deltaLon / 2);
+    double angle =
+        sin(deltaLat / 2) * sin(deltaLat / 2) + cos(lat1rad) * cos(lat2rad) * sin(deltaLon / 2) * sin(deltaLon / 2);
 
     double angularDistance = 2 * atan2(sqrt(angle), sqrt(1 - angle));
     double returnedDistance = earthRadius * angularDistance;
@@ -559,7 +572,9 @@ class _RecordingState extends State<Recording> {
                 // BREAKPOINT FOR SOME BULLSHIT I CANT FUCKING REMEMBER
                 // too bad !
                 duration: Duration(milliseconds: 200),
-                height: !isFullScreen ? deviceHeight - deviceHeight / 1.4 - statusHeight : deviceHeight - statusHeight - 200,
+                height: !isFullScreen
+                    ? deviceHeight - deviceHeight / 1.4 - statusHeight
+                    : deviceHeight - statusHeight - 200,
                 decoration: new BoxDecoration(color: Color(bgDark)),
                 child: Stack(
                   children: [
@@ -573,8 +588,10 @@ class _RecordingState extends State<Recording> {
                                 duration: Duration(milliseconds: 200),
                                 alignment: isFullScreen ? Alignment.topCenter : Alignment.center,
                                 child: Row(mainAxisAlignment: MainAxisAlignment.spaceEvenly, children: [
-                                  Text(displayPower + "W", style: TextStyle(fontSize: deviceHeight / 16, color: Colors.white)),
-                                  Text(displayIncline + "%", style: TextStyle(fontSize: deviceHeight / 16, color: Colors.white))
+                                  Text(displayPower + "W",
+                                      style: TextStyle(fontSize: deviceHeight / 16, color: Colors.white)),
+                                  Text(displayIncline + "%",
+                                      style: TextStyle(fontSize: deviceHeight / 16, color: Colors.white))
                                 ]))
                             : null),
                     AnimatedContainer(
@@ -599,7 +616,8 @@ class _RecordingState extends State<Recording> {
                                 duration: Duration(milliseconds: 200),
                                 alignment: isFullScreen ? Alignment.topCenter : Alignment.center,
                                 child: Row(mainAxisAlignment: MainAxisAlignment.spaceEvenly, children: [
-                                  Text(displayVelocity + " KM/H", style: TextStyle(fontSize: deviceHeight / 16, color: Colors.white)),
+                                  Text(displayVelocity + " KM/H",
+                                      style: TextStyle(fontSize: deviceHeight / 16, color: Colors.white)),
                                 ]))
                             : null),
                     AnimatedContainer(
@@ -623,7 +641,8 @@ class _RecordingState extends State<Recording> {
                             duration: Duration(milliseconds: 200),
                             alignment: isFullScreen ? Alignment.bottomCenter : Alignment.center,
                             child: Row(mainAxisAlignment: MainAxisAlignment.spaceEvenly, children: [
-                              Text(displayDistance + "KM", style: TextStyle(fontSize: deviceHeight / 16, color: Colors.white)),
+                              Text(displayDistance + "KM",
+                                  style: TextStyle(fontSize: deviceHeight / 16, color: Colors.white)),
                               Text(displayTime, style: TextStyle(fontSize: deviceHeight / 16, color: Colors.white))
                             ]))),
                     AnimatedContainer(
@@ -808,17 +827,19 @@ class _SaveRoutePageState extends State<SaveRoutePage> {
   }
 
   void insertIntoDatabase(Activity activity, Database database) async {
-    await database.rawInsert("INSERT INTO activities(id, title, description, distance, timeElapsed, averageVelocity, caloriesBurnt, isPublic, exertion) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?)", [
-      activity.timestamp,
-      activity.title,
-      activity.description,
-      activity.distance,
-      activity.timeElapsedinSeconds,
-      activity.averageVelocity,
-      activity.caloriesBurnt,
-      activity.isPublic,
-      activity.exertion
-    ]);
+    await database.rawInsert(
+        "INSERT INTO activities(id, title, description, distance, timeElapsed, averageVelocity, caloriesBurnt, isPublic, exertion) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?)",
+        [
+          activity.timestamp,
+          activity.title,
+          activity.description,
+          activity.distance,
+          activity.timeElapsedinSeconds,
+          activity.averageVelocity,
+          activity.caloriesBurnt,
+          activity.isPublic,
+          activity.exertion
+        ]);
 
     print(await database.rawQuery("SELECT * FROM activities"));
   }
@@ -849,7 +870,13 @@ class _SaveRoutePageState extends State<SaveRoutePage> {
           isPublic: isPublic,
           exertion: exertion);
 
+      // UNCOMMENT THE LINE BELOW IF YOU FUCKED UP
+      //
+      //
       await deleteDatabase(p.join(await getDatabasesPath(), 'activities.db'));
+      //
+      //
+      // UNCOMMENT THE LINE ABOVE IF YOU FUCKED UP
 
       Database database = await openDatabase(
         p.join(await getDatabasesPath(), 'activities.db'),
