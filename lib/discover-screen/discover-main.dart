@@ -38,18 +38,6 @@ class _DiscoverMainState extends State<DiscoverMain> {
     ));
   }
 
-  discoverSaved() {
-    Navigator.of(context).push(MaterialPageRoute(
-      builder: (context) => SavedRoutePage(),
-    ));
-  }
-
-  discoverPopular() {
-    Navigator.of(context).push(MaterialPageRoute(
-      builder: (context) => PopularRoutePage(),
-    ));
-  }
-
   discoverImport() {
     Navigator.of(context).push(MaterialPageRoute(
       builder: (context) => ImportRoutePage(),
@@ -102,61 +90,12 @@ class _DiscoverMainState extends State<DiscoverMain> {
                                           bottomRight: const Radius.circular(15.0),
                                         )),
                                     child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: <Widget>[
-                                      Text("GENERATE A ROUTE", style: TextStyle(fontSize: deviceHeight / 28, color: Colors.black)),
+                                      Text("GENERATE A ROUTE",
+                                          style: TextStyle(fontSize: deviceHeight / 28, color: Colors.black)),
                                       Container(height: 5),
-                                      Text("Find new routes using the circular route generator", style: TextStyle(height: 1.2, fontSize: deviceHeight / 41, color: Colors.black)),
-                                    ]),
-                                    padding: EdgeInsets.fromLTRB(14, 5, 20, 12)))))),
-                Container(
-                    color: Color(bgLight),
-                    height: deviceHeight / 5.4,
-                    child: Center(
-                        child: Container(
-                            child: InkWell(
-                                onTap: () {
-                                  discoverSaved();
-                                },
-                                child: Container(
-                                    height: deviceHeight / 6.4,
-                                    width: deviceWidth / 100 * 95,
-                                    decoration: new BoxDecoration(
-                                        color: Colors.white,
-                                        borderRadius: new BorderRadius.only(
-                                          topLeft: const Radius.circular(15.0),
-                                          topRight: const Radius.circular(15.0),
-                                          bottomLeft: const Radius.circular(15.0),
-                                          bottomRight: const Radius.circular(15.0),
-                                        )),
-                                    child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: <Widget>[
-                                      Text("VIEW SAVED ROUTES", style: TextStyle(fontSize: deviceHeight / 28, color: Colors.black)),
-                                      Container(height: 5),
-                                      Text("View and manage the routes you have saved", style: TextStyle(height: 1.2, fontSize: deviceHeight / 41, color: Colors.black)),
-                                    ]),
-                                    padding: EdgeInsets.fromLTRB(14, 5, 20, 12)))))),
-                Container(
-                    color: Color(bgLight),
-                    height: deviceHeight / 5.4,
-                    child: Center(
-                        child: Container(
-                            child: InkWell(
-                                onTap: () {
-                                  discoverPopular();
-                                },
-                                child: Container(
-                                    height: deviceHeight / 6.4,
-                                    width: deviceWidth / 100 * 95,
-                                    decoration: new BoxDecoration(
-                                        color: Colors.white,
-                                        borderRadius: new BorderRadius.only(
-                                          topLeft: const Radius.circular(15.0),
-                                          topRight: const Radius.circular(15.0),
-                                          bottomLeft: const Radius.circular(15.0),
-                                          bottomRight: const Radius.circular(15.0),
-                                        )),
-                                    child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: <Widget>[
-                                      Text("SEE POPULAR ROUTES", style: TextStyle(fontSize: deviceHeight / 28, color: Colors.black)),
-                                      Container(height: 5),
-                                      Text("View the most popular routes according to our users", style: TextStyle(height: 1.2, fontSize: deviceHeight / 41, color: Colors.black, fontWeight: FontWeight.w100)),
+                                      Text("Find new routes using the circular route generator",
+                                          style:
+                                              TextStyle(height: 1.2, fontSize: deviceHeight / 41, color: Colors.black)),
                                     ]),
                                     padding: EdgeInsets.fromLTRB(14, 5, 20, 12)))))),
                 Container(
@@ -180,9 +119,15 @@ class _DiscoverMainState extends State<DiscoverMain> {
                                           bottomRight: const Radius.circular(15.0),
                                         )),
                                     child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: <Widget>[
-                                      Text("IMPORT ROUTES", style: TextStyle(fontSize: deviceHeight / 28, color: Colors.black)),
+                                      Text("IMPORT ACTIVITIES",
+                                          style: TextStyle(fontSize: deviceHeight / 28, color: Colors.black)),
                                       Container(height: 5),
-                                      Text("Import .gpx files into the app to use as routes", style: TextStyle(height: 1.2, fontSize: deviceHeight / 41, color: Colors.black, fontWeight: FontWeight.w100)),
+                                      Text("Import .gpx files into the app to use as previous activities",
+                                          style: TextStyle(
+                                              height: 1.2,
+                                              fontSize: deviceHeight / 41,
+                                              color: Colors.black,
+                                              fontWeight: FontWeight.w100)),
                                     ]),
                                     padding: EdgeInsets.fromLTRB(14, 5, 20, 12)))))),
               ],
@@ -216,7 +161,8 @@ class _GenerateRoutePageState extends State<GenerateRoutePage> {
   Future<void> moveCamera() async {
     var pos = await location.getLocation();
     final GoogleMapController controller = await _controller.future;
-    controller.animateCamera(CameraUpdate.newCameraPosition(CameraPosition(target: LatLng(pos.latitude, pos.longitude), zoom: 15)));
+    controller.animateCamera(
+        CameraUpdate.newCameraPosition(CameraPosition(target: LatLng(pos.latitude, pos.longitude), zoom: 15)));
   }
 
   showLocationError() {
@@ -324,7 +270,8 @@ class _GenerateRoutePageState extends State<GenerateRoutePage> {
 
     try {
       List result = await gcd.locationFromAddress(userAddress, localeIdentifier: "en");
-      controller.animateCamera(CameraUpdate.newCameraPosition(CameraPosition(target: LatLng(result[0].latitude, result[0].longitude), zoom: 15)));
+      controller.animateCamera(CameraUpdate.newCameraPosition(
+          CameraPosition(target: LatLng(result[0].latitude, result[0].longitude), zoom: 15)));
     } on gcd.NoResultFoundException {
       showLocationError();
     } on PlatformException {
@@ -580,32 +527,6 @@ class _GenerateRoutePageState extends State<GenerateRoutePage> {
             ),
           ),
         ])));
-  }
-}
-
-class SavedRoutePage extends StatefulWidget {
-  @override
-  _SavedRoutePageState createState() => _SavedRoutePageState();
-}
-
-class _SavedRoutePageState extends State<SavedRoutePage> {
-  _SavedRoutePageState();
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(backgroundColor: Colors.orange);
-  }
-}
-
-class PopularRoutePage extends StatefulWidget {
-  @override
-  _PopularRoutePageState createState() => _PopularRoutePageState();
-}
-
-class _PopularRoutePageState extends State<PopularRoutePage> {
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(backgroundColor: Colors.lightGreen);
   }
 }
 

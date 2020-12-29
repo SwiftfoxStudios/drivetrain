@@ -1,8 +1,11 @@
 // MAIN DART PARENT IMPORT
 import 'dart:async';
 import 'dart:math';
+import 'dart:io';
 
 // FILE DEPENDENCIES
+import 'package:flutter/foundation.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:flutter/services.dart';
@@ -175,7 +178,6 @@ class Recording extends StatefulWidget {
 
 class _RecordingState extends State<Recording> {
   Completer<GoogleMapController> _controller = Completer();
-  StreamSubscription locationSubscription;
   Location location = Location();
   bool travelType;
   Color testVal;
@@ -204,9 +206,8 @@ class _RecordingState extends State<Recording> {
   bool isFullScreen = false;
   Icon isFullScreenWidget;
   final gpx = Gpx();
-  List<Wpt> listOfGPXPoints;
+  List<Wpt> listOfGPXPoints = List<Wpt>();
 
-  static final CameraPosition initial = CameraPosition(target: LatLng(51.453318, -0.102559), zoom: 16);
   _RecordingState(this.travelType);
 
   void parseType() {
@@ -224,15 +225,15 @@ class _RecordingState extends State<Recording> {
 
   @override
   dispose() {
-    locationSubscription?.cancel();
     super.dispose();
   }
 
-  Future<void> moveCamera() async {
-    var pos = await location.getLocation();
-    final GoogleMapController controller = await _controller.future;
-    controller.animateCamera(
-        CameraUpdate.newCameraPosition(CameraPosition(target: LatLng(pos.latitude, pos.longitude), zoom: 15)));
+  Future<CameraPosition> setInitial() async {
+    CameraPosition position;
+    await location.getLocation().then((value) {
+      position = CameraPosition(target: LatLng(value.latitude, value.longitude), zoom: 1);
+    });
+    return position;
   }
 
   void checkPaused() {
@@ -280,6 +281,7 @@ class _RecordingState extends State<Recording> {
     if (clock.isRunning) {
       startClock();
     }
+    updateTracking();
     int elapsedHours = clock.elapsed.inHours;
     int elapsedMinutes = clock.elapsed.inMinutes % 60;
     int elapsedSeconds = clock.elapsed.inSeconds % 60;
@@ -295,25 +297,35 @@ class _RecordingState extends State<Recording> {
       }
       displayTimeInSeconds = clock.elapsed.inSeconds;
     });
-    print(displayTimeInSeconds);
   }
 
-  void startListening() async {
-    gpx.metadata = Metadata(name: DateTime.now().millisecondsSinceEpoch.toString(), time: DateTime.now());
-    location.changeSettings(distanceFilter: 10, accuracy: LocationAccuracy.high);
-    locationSubscription = location.onLocationChanged.listen((LocationData positionUpdate) {
-      updatePosition(positionUpdate.latitude, positionUpdate.longitude, positionUpdate.altitude);
-      updateVelocity(positionUpdate.speed);
+  // void startListening() async {
+  //   gpx.metadata = Metadata(name: DateTime.now().millisecondsSinceEpoch.toString(), time: DateTime.now());
+  //   location.changeSettings(distanceFilter: 10, accuracy: LocationAccuracy.high);
+  //   locationSubscription = location.onLocationChanged.listen((LocationData positionUpdate) {
+  //     updatePosition(positionUpdate.latitude, positionUpdate.longitude, positionUpdate.altitude);
+  //     updateVelocity(positionUpdate.speed);
+  //     updateAverageVelocity(displayDistance, displayTimeInSeconds);
+  //   });
+  // }
+
+  void updateTracking() async {
+    print("fn accessed");
+    print(await location.getLocation());
+    await location.getLocation().then((value) async {
+      print("value");
+      updatePosition(value.latitude, value.longitude, value.altitude);
+      updateVelocity(value.speed);
       updateAverageVelocity(displayDistance, displayTimeInSeconds);
+      final GoogleMapController controller = await _controller.future;
+      controller.animateCamera(
+          CameraUpdate.newCameraPosition(CameraPosition(target: LatLng(value.latitude, value.longitude), zoom: 15)));
+      print("fn complete");
     });
   }
 
-  void stopListening() {
-    print("hello");
-    locationSubscription.cancel();
-  }
-
   void updatePosition(double finalLat, double finalLon, double finalAltitude) async {
+    print("updatePosition $finalLat, $finalLon");
     print(visitedPoints);
     double initialLat;
     double initialLon;
@@ -378,6 +390,7 @@ class _RecordingState extends State<Recording> {
   }
 
   void updateVelocity(double estimatedVelocity) {
+    print("updateVelocity $estimatedVelocity");
     estimatedVelocity = estimatedVelocity * 18 / 5;
     setState(() {
       displayVelocity = estimatedVelocity.toStringAsFixed(1);
@@ -385,6 +398,7 @@ class _RecordingState extends State<Recording> {
   }
 
   void updateAverageVelocity(String elapsedDistance, int elapsedTime) {
+    print("updateAVGV $elapsedDistance, $elapsedTime");
     double distance = double.parse(elapsedDistance);
     double time = elapsedTime / 3600;
     double averageVelocity = distance / time;
@@ -518,11 +532,12 @@ class _RecordingState extends State<Recording> {
                 Navigator.of(context).pop(true);
                 Navigator.of(context).push(MaterialPageRoute(
                     builder: (context) => SaveRoutePage(
-                          fDistance: displayDistance,
-                          fTime: displayTimeInSeconds,
-                          fVelocity: displayAverageVelocity,
-                          riderMass: riderMass,
-                        )));
+                        fDistance: displayDistance,
+                        fTime: displayTimeInSeconds,
+                        fVelocity: displayAverageVelocity,
+                        riderMass: riderMass,
+                        gpx: gpx,
+                        listOfWpt: listOfGPXPoints)));
               },
             )
           ],
@@ -542,7 +557,6 @@ class _RecordingState extends State<Recording> {
     parseType();
     checkPaused();
     checkifFullScreen();
-    moveCamera();
     addPoly();
 
     final deviceHeight = MediaQuery.of(context).size.height;
@@ -560,7 +574,7 @@ class _RecordingState extends State<Recording> {
                 // GOOGLE MAP CONTAINER
                 height: isFullScreen ? 200 : deviceHeight / 1.4,
                 child: GoogleMap(
-                    initialCameraPosition: initial,
+                    initialCameraPosition: CameraPosition(target: LatLng(51, 0), zoom: 14),
                     zoomControlsEnabled: false,
                     myLocationEnabled: true,
                     onMapCreated: (GoogleMapController controller) {
@@ -667,12 +681,9 @@ class _RecordingState extends State<Recording> {
                                 RawMaterialButton(
                                   onPressed: () {
                                     if (clockIsPaused) {
-                                      startListening();
-
                                       clock.start();
                                       startClock();
                                     } else {
-                                      stopListening();
                                       clock.stop();
                                       pauseClock();
                                     }
@@ -686,7 +697,7 @@ class _RecordingState extends State<Recording> {
                                 RawMaterialButton(
                                   onPressed: () {
                                     if (clockIsPaused) {
-                                      if (displayDistance == "0.0") {
+                                      if (displayDistance == "0.1") {
                                         showNullRouteError();
                                       } else {
                                         showUserConfirmDialog();
@@ -733,7 +744,9 @@ class SaveRoutePage extends StatefulWidget {
   final int fTime;
   final String fVelocity;
   final double riderMass;
-  SaveRoutePage({this.fDistance, this.fTime, this.fVelocity, this.riderMass});
+  final Gpx gpx;
+  final List<Wpt> listOfWpt;
+  SaveRoutePage({this.fDistance, this.fTime, this.fVelocity, this.riderMass, this.gpx, this.listOfWpt});
   @override
   _SaveRoutePageState createState() => _SaveRoutePageState();
 }
@@ -841,6 +854,25 @@ class _SaveRoutePageState extends State<SaveRoutePage> {
           activity.exertion
         ]);
 
+    widget.gpx.metadata = Metadata();
+    widget.gpx.metadata.time = DateTime.fromMillisecondsSinceEpoch(activity.timestamp);
+    widget.gpx.metadata.name = activity.title;
+    widget.gpx.metadata.desc = activity.description;
+    widget.gpx.wpts = widget.listOfWpt;
+
+    final String gpxString = GpxWriter().asString(widget.gpx, pretty: true);
+    print(gpxString);
+
+    String validFilename = activityTitle.replaceAll(RegExp(" +"), "-");
+
+    String filename;
+
+    await getApplicationDocumentsDirectory().then((value) {
+      filename = p.join("${value.path}/", "$validFilename.gpx");
+      print(value.path);
+    });
+    new File(filename).writeAsString(gpxString).then((value) => print("complete"));
+
     print(await database.rawQuery("SELECT * FROM activities"));
   }
 
@@ -873,7 +905,7 @@ class _SaveRoutePageState extends State<SaveRoutePage> {
       // UNCOMMENT THE LINE BELOW IF YOU FUCKED UP
       //
       //
-      await deleteDatabase(p.join(await getDatabasesPath(), 'activities.db'));
+      // await deleteDatabase(p.join(await getDatabasesPath(), 'activities.db'));
       //
       //
       // UNCOMMENT THE LINE ABOVE IF YOU FUCKED UP

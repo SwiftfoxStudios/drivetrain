@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 
 import 'package:gpx/gpx.dart';
 
-import '../activityClass.dart';
 import 'package:path/path.dart' as p;
 import 'package:sqflite/sqflite.dart';
 import 'package:intl/intl.dart';
