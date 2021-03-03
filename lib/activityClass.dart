@@ -5,12 +5,26 @@ class Activity {
   String title;
   String description;
   double distance;
+  double climbed;
   int timeElapsedinSeconds;
+  int movingTimeinSeconds;
   double averageVelocity;
   int caloriesBurnt;
   bool isPublic;
   int exertion;
   Gpx routeGpx;
 
-  Activity({this.timestamp, this.title, this.description, this.distance, this.timeElapsedinSeconds, this.averageVelocity, this.caloriesBurnt, this.isPublic, this.exertion, this.routeGpx});
+  Activity(
+      {this.timestamp,
+      this.title,
+      this.description,
+      this.distance,
+      this.climbed,
+      this.timeElapsedinSeconds,
+      this.movingTimeinSeconds,
+      this.averageVelocity,
+      this.caloriesBurnt,
+      this.isPublic,
+      this.exertion,
+      this.routeGpx});
 }

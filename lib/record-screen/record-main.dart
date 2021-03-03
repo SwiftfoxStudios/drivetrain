@@ -902,13 +902,13 @@ class _SaveRoutePageState extends State<SaveRoutePage> {
           isPublic: isPublic,
           exertion: exertion);
 
-      // UNCOMMENT THE LINE BELOW IF YOU FUCKED UP
+      // UNCOMMENT THE LINE BELOW IF YOU F--d UP
       //
       //
       // await deleteDatabase(p.join(await getDatabasesPath(), 'activities.db'));
       //
       //
-      // UNCOMMENT THE LINE ABOVE IF YOU FUCKED UP
+      // UNCOMMENT THE LINE ABOVE IF YOU F--d UP
 
       Database database = await openDatabase(
         p.join(await getDatabasesPath(), 'activities.db'),

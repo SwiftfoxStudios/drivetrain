@@ -1,15 +1,21 @@
 // MATERIAL DESIGN IMPORT
 import 'dart:math';
 import 'dart:core';
+import 'dart:io';
+
+import 'package:xml/xml.dart';
+import 'WorkoutPoint.dart';
 
 import '../secrets/keys.dart';
+import '../activityClass.dart';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import 'dart:async';
 
-import 'package:http/http.dart' as http;
-import 'dart:convert';
+import 'package:file_picker/file_picker.dart';
+import 'package:path/path.dart' as p;
 
 // GMAP FOR ROUTE GENERATION
 import 'package:flutter_polyline_points/flutter_polyline_points.dart';
@@ -17,6 +23,7 @@ import 'package:flutter/services.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:location/location.dart';
 import 'package:geocoding/geocoding.dart' as gcd;
+import 'package:sqflite/sqflite.dart';
 
 // COLOURS USED IN PROJECT
 const bgDark = 0xff202020;
@@ -536,8 +543,421 @@ class ImportRoutePage extends StatefulWidget {
 }
 
 class _ImportRoutePageState extends State<ImportRoutePage> {
+  String fileData = "";
+  bool isUploaded = false;
+  double riderMass = 57;
+  double exertionSliderValue = 5;
+  bool privacyisSwitched = false;
+  Map calculatedMetadata;
+
+  void openFile() async {
+    FilePickerResult result = await FilePicker.platform.pickFiles(type: FileType.any);
+    if (result != null) {
+      String path = result.files.first.path;
+      if (path.substring(path.length - 4) != ".gpx") {
+        showInvalidFileError();
+      } else {
+        readFileMetadata(path);
+      }
+    }
+  }
+
+  showInvalidFileError() {
+    /*
+        DESC: Catches invalid file type
+        PARAMS: null
+        RETURNS: Error dialog box
+    */
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: new Text("GPX file not selected"),
+          backgroundColor: Colors.white,
+          content: new Text("Please select a file with the file extension '.gpx'."),
+          actions: <Widget>[
+            new FlatButton(
+              child: new Text("CLOSE"),
+              color: Color(accent),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void readFileMetadata(String path) {
+    calculatedMetadata = null;
+    final file = new File(path);
+    final document = XmlDocument.parse(file.readAsStringSync());
+    String workoutTitle = document.findAllElements('name').single.text;
+    final workoutPoints = document.findAllElements('trkpt');
+
+    List pointsData = workoutPoints.map((point) {
+      bool hrExists = true;
+      bool powerExists = true;
+      Point workoutPoint = Point(
+          point.findElements('time').first.text,
+          double.parse(point.attributes[0].toString().substring(5, point.attributes[0].toString().length - 1)),
+          double.parse(point.attributes[1].toString().substring(5, point.attributes[0].toString().length - 1)),
+          double.parse(point.findElements('ele').first.text));
+      try {
+        point.findElements('extensions');
+      } on StateError {
+        hrExists = false;
+        powerExists = false;
+      }
+      if (powerExists) {
+        try {
+          point.findElements('extensions').first.findElements('power').first;
+        } on StateError {
+          powerExists = false;
+        }
+      }
+      if (hrExists) {
+        try {
+          point
+              .findElements('extensions')
+              .first
+              .findElements('gpxtpx:TrackPointExtension')
+              .first
+              .findElements('gpxtpx:hr')
+              .first;
+        } on StateError {
+          hrExists = false;
+        }
+      }
+      if (hrExists) {
+        workoutPoint.hr = int.parse(point
+            .findElements('extensions')
+            .first
+            .findElements('gpxtpx:TrackPointExtension')
+            .first
+            .findElements('gpxtpx:hr')
+            .first
+            .text);
+      }
+      if (powerExists) {
+        workoutPoint.power = int.parse(point.findElements('extensions').first.findElements('power').first.text);
+      }
+      return workoutPoint;
+    }).toList();
+    print(pointsData[0].lat);
+    setState(() {
+      fileData = workoutTitle;
+      isUploaded = true;
+    });
+
+    double distance = 0;
+    double climbed = 0;
+    int movingTimeinMS = 0;
+    for (var i = 0; i < pointsData.length; i++) {
+      if (i != pointsData.length - 1) {
+        distance += calculateDistance(pointsData[i].lat, pointsData[i].lon, pointsData[i + 1].lat,
+            pointsData[i + 1].lon, pointsData[i].elevation, pointsData[i + 1].elevation);
+        climbed += calculateClimbed(pointsData[i].elevation, pointsData[i + 1].elevation);
+        movingTimeinMS += accumulatedMovingTime(
+          pointsData[i].time,
+          pointsData[i + 1].time,
+          pointsData[i].lat,
+          pointsData[i].lon,
+          pointsData[i + 1].lat,
+          pointsData[i + 1].lon,
+        );
+      }
+    }
+    int elapsed = calculateElapsedTime(pointsData[0].time, pointsData[pointsData.length - 1].time);
+    print(distance);
+    print(climbed);
+    print(movingTimeinMS);
+
+    calculatedMetadata = {
+      "distance": distance,
+      "climbed": climbed,
+      "title": workoutTitle,
+      "timestamp": DateTime.parse(pointsData[0].time).millisecondsSinceEpoch,
+      "elapsedTime": elapsed / 1000,
+      "movingTime": movingTimeinMS / 1000,
+      "averageVelocity": distance / (movingTimeinMS / 1000) * 3.6,
+      "caloriesBurnt": calculateCaloriesBurnt(movingTimeinMS / 1000, riderMass),
+    };
+  }
+
+  int calculateCaloriesBurnt(time, mass) {
+    const double metabolicTaskEquivalent = 9.5;
+    double count = (time * metabolicTaskEquivalent * mass / (200 * 60));
+    return count.round();
+  }
+
+  double calculateDistance(double lat1, double lon1, double lat2, double lon2, double ele1, double ele2) {
+    // HAVERSINE FORMULA
+    const double earthRadius = 6371e3;
+    double lat1rad = lat1 * pi / 180;
+    double lat2rad = lat2 * pi / 180;
+
+    double deltaLat = (lat2 - lat1) * pi / 180;
+    double deltaLon = (lon2 - lon1) * pi / 180;
+
+    double angle =
+        sin(deltaLat / 2) * sin(deltaLat / 2) + cos(lat1rad) * cos(lat2rad) * sin(deltaLon / 2) * sin(deltaLon / 2);
+
+    double angularDistance = 2 * atan2(sqrt(angle), sqrt(1 - angle));
+    double returnedDistance = earthRadius * angularDistance;
+    double elevationChange = ele2 - ele1;
+    returnedDistance = sqrt(pow(returnedDistance, 2) + pow(elevationChange, 2));
+    return returnedDistance;
+    // Returned value is in metres
+  }
+
+  double calculateClimbed(double ele1, double ele2) {
+    if (ele2 > ele1) {
+      return ele2 - ele1;
+    } else
+      return 0;
+  }
+
+  int calculateElapsedTime(String start, String end) {
+    DateTime startTime = DateTime.parse(start);
+    DateTime endTime = DateTime.parse(end);
+    return endTime.millisecondsSinceEpoch - startTime.millisecondsSinceEpoch;
+  }
+
+  int accumulatedMovingTime(String startTime, String endTime, double lat1, double lon1, double lat2, double lon2) {
+    if (lat1 == lat2 && lon1 == lon2) {
+      return 0;
+    } else {
+      return DateTime.parse(endTime).millisecondsSinceEpoch - DateTime.parse(startTime).millisecondsSinceEpoch;
+    }
+  }
+
+  void publishActivitytoDatabase(Map metadata) async {
+    Database database = await openDatabase(
+      p.join(await getDatabasesPath(), 'activities.db'),
+      onCreate: (db, version) async {
+        await db.execute(
+          "CREATE TABLE activities(id INT PRIMARY KEY, title TEXT, description TEXT, distance REAL, timeElapsed INTEGER, averageVelocity REAL, caloriesBurnt INTEGER, isPublic BOOL, exertion INTEGER)",
+        );
+      },
+      version: 1,
+    );
+    bool isPublic = !privacyisSwitched;
+    int exertion = exertionSliderValue.floor();
+
+    final activityObject = Activity(
+        timestamp: metadata["timestamp"],
+        title: metadata["title"],
+        description: "",
+        distance: double.parse((metadata["distance"] / 1000).toStringAsFixed(1)),
+        timeElapsedinSeconds: metadata["elapsedTime"].round(),
+        averageVelocity: double.parse(metadata["averageVelocity"].toStringAsFixed(1)),
+        caloriesBurnt: metadata["caloriesBurnt"],
+        isPublic: isPublic,
+        exertion: exertion);
+
+    // UNCOMMENT THE LINE BELOW IF YOU F--d UP
+    //
+    //
+    // await deleteDatabase(p.join(await getDatabasesPath(), 'activities.db'));
+    //
+    //
+    // UNCOMMENT THE LINE ABOVE IF YOU F--d UP
+
+    insertIntoDatabase(activityObject, database);
+  }
+
+  void insertIntoDatabase(Activity activity, Database database) async {
+    await database.rawInsert(
+        "INSERT INTO activities(id, title, description, distance, timeElapsed, averageVelocity, caloriesBurnt, isPublic, exertion) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?)",
+        [
+          activity.timestamp,
+          activity.title,
+          activity.description,
+          activity.distance,
+          activity.timeElapsedinSeconds,
+          activity.averageVelocity,
+          activity.caloriesBurnt,
+          activity.isPublic,
+          activity.exertion
+        ]);
+
+    print(await database.rawQuery("SELECT * FROM activities"));
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Scaffold(backgroundColor: Colors.cyan);
+    final deviceHeight = MediaQuery.of(context).size.height;
+    final deviceWidth = MediaQuery.of(context).size.width;
+    final statusHeight = MediaQuery.of(context).padding.top;
+    return Scaffold(
+        appBar: AppBar(
+          centerTitle: true,
+          backgroundColor: Color(accent),
+          title: Text("IMPORT ACTIVITY", style: TextStyle(fontSize: deviceHeight / 25, color: Colors.white)),
+          elevation: 0.0,
+          actions: [],
+        ),
+        body: Container(
+            padding: EdgeInsets.all(20),
+            height: deviceHeight - statusHeight - 56,
+            color: Color(bgDark),
+            width: deviceWidth,
+            child: Column(
+              children: [
+                Container(height: deviceHeight / 10),
+                Center(
+                  child: Text(
+                    "Navigate to open file below:",
+                    style: TextStyle(color: Colors.white, fontSize: 16),
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+                Container(height: deviceHeight / 50),
+                Center(
+                    child: Container(
+                  padding: EdgeInsets.all(5),
+                  decoration:
+                      BoxDecoration(color: Colors.red.shade900, borderRadius: BorderRadius.all(Radius.circular(10))),
+                  child: Text(
+                    "WARNING: FILES MUST BE DIRECTLY FROM STRAVA AND HAVE THE GPX FILE TYPE. IT MUST INCLUDE ELEVATION AND LOCATION DATA.",
+                    style: TextStyle(color: Colors.white, fontSize: 14),
+                    textAlign: TextAlign.center,
+                  ),
+                )),
+                Container(height: deviceHeight / 50),
+                Center(
+                  child: FlatButton(
+                    child: Text("OPEN FILE"),
+                    onPressed: () {
+                      openFile();
+                    },
+                    color: Color(accent),
+                    textColor: Colors.white,
+                    padding: EdgeInsets.fromLTRB(10, 10, 10, 10),
+                    splashColor: Colors.grey,
+                  ),
+                ),
+                Container(height: deviceHeight / 50),
+                Center(
+                  child: Text(
+                    isUploaded ? "UPLOADED:" : "",
+                    style: TextStyle(color: Colors.green, fontSize: 20),
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+                Center(
+                  child: Text(
+                    fileData,
+                    style: TextStyle(color: Colors.white, fontSize: 16),
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+                Container(height: deviceHeight / 50),
+                Center(
+                  child: Container(
+                    padding: EdgeInsets.all(5),
+                    decoration: isUploaded
+                        ? BoxDecoration(color: Colors.red.shade900, borderRadius: BorderRadius.all(Radius.circular(10)))
+                        : BoxDecoration(),
+                    child: Text(
+                      isUploaded ? "WARNING: FILE WILL HAVE INACCURACIES WITH DATA DUE TO GPX STANDARD." : "",
+                      style: TextStyle(color: Colors.white, fontSize: 9),
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                ),
+                Container(height: deviceHeight / 15),
+                isUploaded
+                    ? Container(
+                        padding: EdgeInsets.only(left: 20.0),
+                        child: Align(
+                            alignment: Alignment.centerLeft,
+                            child: Text(
+                              "Percieved Exertion:",
+                              style: TextStyle(fontSize: deviceHeight / 40, color: Colors.white),
+                            )))
+                    : Container(),
+                isUploaded
+                    ? Container(
+                        padding: EdgeInsets.only(left: 20.0),
+                        child: Align(
+                            alignment: Alignment.centerLeft,
+                            child: Text(
+                              "(How hard was that activity?)",
+                              style: TextStyle(fontSize: deviceHeight / 70, color: Colors.white),
+                            )))
+                    : Container(),
+                isUploaded
+                    ? Container(
+                        child: Slider(
+                        activeColor: Color(accent),
+                        inactiveColor: Colors.grey,
+                        value: exertionSliderValue,
+                        min: 0,
+                        max: 10,
+                        divisions: 10,
+                        label: exertionSliderValue.round().toString(),
+                        onChanged: (double value) {
+                          setState(() {
+                            exertionSliderValue = value;
+                          });
+                        },
+                      ))
+                    : Container(),
+                Container(height: deviceHeight / 30),
+                isUploaded
+                    ? Container(
+                        padding: EdgeInsets.only(left: 20.0),
+                        child: Align(
+                            alignment: Alignment.centerLeft,
+                            child: Text(
+                              "Activity Visibility:",
+                              style: TextStyle(fontSize: deviceHeight / 40, color: Colors.white),
+                            )))
+                    : Container(),
+                isUploaded
+                    ? Container(
+                        padding: EdgeInsets.all(10.0),
+                        child: Center(
+                            child: Row(
+                          // TOGGLE SWITCH UI
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: <Widget>[
+                            Icon(Icons.lock_outline_sharp, color: Colors.white),
+                            Switch(
+                              value: !privacyisSwitched,
+                              onChanged: (value) {
+                                setState(() {
+                                  privacyisSwitched = !value;
+                                });
+                              },
+                              inactiveTrackColor: Colors.white,
+                              inactiveThumbColor: Color(accent),
+                              activeTrackColor: Colors.white,
+                              activeColor: Color(accent),
+                            ),
+                            Icon(Icons.lock_open_sharp, color: Colors.white)
+                          ],
+                        )))
+                    : Container(),
+                Container(height: deviceHeight / 50),
+                isUploaded
+                    ? Center(
+                        child: FlatButton(
+                          child: Text("PUBLISH"),
+                          onPressed: () {
+                            publishActivitytoDatabase(calculatedMetadata);
+                          },
+                          color: Color(accent),
+                          textColor: Colors.white,
+                          padding: EdgeInsets.fromLTRB(10, 10, 10, 10),
+                          splashColor: Colors.grey,
+                        ),
+                      )
+                    : Center(),
+              ],
+            )));
   }
 }
