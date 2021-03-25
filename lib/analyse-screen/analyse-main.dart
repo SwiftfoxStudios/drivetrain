@@ -1,11 +1,15 @@
+// Import Google Material Design
 import 'package:flutter/material.dart';
 
+// Import GPX Handling Library
 import 'package:gpx/gpx.dart';
 
+// Import File Path Handling Library, SQL and International Date Handling Libraries
 import 'package:path/path.dart' as p;
 import 'package:sqflite/sqflite.dart';
 import 'package:intl/intl.dart';
 
+// Colour Constants
 int bgDark = 0xff202020;
 int bgLight = 0xff2e2e2e;
 int accent = 0xffff5d54;
@@ -173,6 +177,7 @@ class _AnalyseRecPageState extends State<AnalyseRecPage> {
   }
 
   String convertToHMS(int seconds) {
+    
     Duration duration = Duration(seconds: seconds);
     String twoDigits(int n) => n.toString().padLeft(2, "0");
     String twoDigitMinutes = twoDigits(duration.inMinutes.remainder(60));
@@ -410,6 +415,11 @@ class _RouteAnalysisPageState extends State<RouteAnalysisPage> {
   }
 
   String convertToHMS(int seconds) {
+    /*
+        DESC: Converts Seconds to Hours, Minutes & Seconds
+        PARAMS: Number of seconds
+        RETURNS: String of HMS
+    */
     Duration duration = Duration(seconds: seconds);
     String twoDigits(int n) => n.toString().padLeft(2, "0");
     String twoDigitMinutes = twoDigits(duration.inMinutes.remainder(60));
@@ -418,6 +428,11 @@ class _RouteAnalysisPageState extends State<RouteAnalysisPage> {
   }
 
   List displayExertion(int exertion) {
+    /*
+        DESC: Displays how hard the user found their exercise
+        PARAMS: User exertion input
+        RETURNS: List of exertion metadata
+    */
     List exertionValues = List();
     if (exertion <= 2) {
       exertionValues.add("Very Easy");
@@ -449,6 +464,11 @@ class _RouteAnalysisPageState extends State<RouteAnalysisPage> {
   }
 
   List publicChecker(int isPublic) {
+    /*
+        DESC: Checks if entry is public or private
+        PARAMS: User entered request of privacy
+        RETURNS: List of privacy metadata
+    */
     List checkValues = List();
     if (isPublic == 1) {
       checkValues.add("PUBLIC ACTIVITY");
@@ -624,6 +644,11 @@ class _EditActivityPageState extends State<EditActivityPage> {
   Map activity = Map();
 
   Future<Map> getActivitybyID(int id) async {
+    /*
+        DESC: Gets activity from unique ID
+        PARAMS: ID
+        RETURNS: Data Map of activity
+    */
     Database database = await openDatabase(p.join(await getDatabasesPath(), 'activities.db'));
     await database.rawQuery("SELECT * FROM activities WHERE id = ?", [id]).then((value) => activity = value[0]);
     if (firstRun) {
