@@ -1,29 +1,29 @@
-// MATERIAL DESIGN IMPORT
+// Import Dart Math and I/O handling and Asynchronous Event Handling
 import 'dart:math';
 import 'dart:core';
 import 'dart:io';
+import 'dart:async';
 
+// Import XML and File Control Libraries
 import 'package:xml/xml.dart';
-import 'WorkoutPoint.dart';
+import 'package:file_picker/file_picker.dart';
+import 'package:path/path.dart' as p;
+import 'package:sqflite/sqflite.dart';
 
+// Import local files including API key
 import '../secrets/keys.dart';
 import '../activityClass.dart';
+import 'WorkoutPoint.dart';
 
+// Import Google Material Design & Flutter Services
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-import 'dart:async';
-
-import 'package:file_picker/file_picker.dart';
-import 'package:path/path.dart' as p;
-
-// GMAP FOR ROUTE GENERATION
+// Google Map Imports
 import 'package:flutter_polyline_points/flutter_polyline_points.dart';
-import 'package:flutter/services.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:location/location.dart';
 import 'package:geocoding/geocoding.dart' as gcd;
-import 'package:sqflite/sqflite.dart';
 
 // COLOURS USED IN PROJECT
 const bgDark = 0xff202020;
@@ -164,8 +164,12 @@ class _GenerateRoutePageState extends State<GenerateRoutePage> {
 
   void apiKey() {}
 
-// SETS INITIAL CAMERA POSITION OF GOOGLE MAP
   Future<void> moveCamera() async {
+    /*
+        DESC: Sets camera position of google map
+        PARAMS: Null
+        RETURNS: Null
+    */
     var pos = await location.getLocation();
     final GoogleMapController controller = await _controller.future;
     controller.animateCamera(
@@ -295,6 +299,11 @@ class _GenerateRoutePageState extends State<GenerateRoutePage> {
   }
 
   List<double> calculatePoint(double lat1, double lon1, bearing, distance) {
+    /*
+        DESC: Calculates a destination point from an origin point with bearing and distance
+        PARAMS: Origin point, Bearing & Distance
+        RETURNS: List of coordinates
+    */
     double lat1Rad = deg2rad(lat1);
     double lon1Rad = deg2rad(lon1);
     double bearingRad = deg2rad(bearing);
@@ -551,6 +560,11 @@ class _ImportRoutePageState extends State<ImportRoutePage> {
   Map calculatedMetadata;
 
   void openFile() async {
+    /*
+        DESC: Opens gpx file from user request
+        PARAMS: null
+        RETURNS: null
+    */
     FilePickerResult result = await FilePicker.platform.pickFiles(type: FileType.any);
     if (result != null) {
       String path = result.files.first.path;
@@ -590,6 +604,11 @@ class _ImportRoutePageState extends State<ImportRoutePage> {
   }
 
   void readFileMetadata(String path) {
+    /*
+        DESC: Reads File Metadata
+        PARAMS: File path
+        RETURNS: Null
+    */
     calculatedMetadata = null;
     final file = new File(path);
     final document = XmlDocument.parse(file.readAsStringSync());
@@ -693,7 +712,11 @@ class _ImportRoutePageState extends State<ImportRoutePage> {
   }
 
   double calculateDistance(double lat1, double lon1, double lat2, double lon2, double ele1, double ele2) {
-    // HAVERSINE FORMULA
+    /*
+        DESC: Uses Haversine Formula to calculate distance between two points
+        PARAMS: Points and change in elevation between points
+        RETURNS: Value of Distance
+    */
     const double earthRadius = 6371e3;
     double lat1rad = lat1 * pi / 180;
     double lat2rad = lat2 * pi / 180;
@@ -713,6 +736,11 @@ class _ImportRoutePageState extends State<ImportRoutePage> {
   }
 
   double calculateClimbed(double ele1, double ele2) {
+    /*
+        DESC: Calculates metres climbed between two points
+        PARAMS: Change in elevation between points
+        RETURNS: Value of Metres Climbed
+    */
     if (ele2 > ele1) {
       return ele2 - ele1;
     } else
@@ -720,12 +748,22 @@ class _ImportRoutePageState extends State<ImportRoutePage> {
   }
 
   int calculateElapsedTime(String start, String end) {
+    /*
+        DESC: Calculates Elapsed Time
+        PARAMS: Start and End times
+        RETURNS: Time
+    */
     DateTime startTime = DateTime.parse(start);
     DateTime endTime = DateTime.parse(end);
     return endTime.millisecondsSinceEpoch - startTime.millisecondsSinceEpoch;
   }
 
   int accumulatedMovingTime(String startTime, String endTime, double lat1, double lon1, double lat2, double lon2) {
+    /*
+        DESC: Calculates Moving Time
+        PARAMS: Start and End times
+        RETURNS: Time
+    */
     if (lat1 == lat2 && lon1 == lon2) {
       return 0;
     } else {
@@ -734,6 +772,11 @@ class _ImportRoutePageState extends State<ImportRoutePage> {
   }
 
   void publishActivitytoDatabase(Map metadata) async {
+    /*
+        DESC: Publishes activity to database
+        PARAMS: File metadata
+        RETURNS: Null
+    */
     Database database = await openDatabase(
       p.join(await getDatabasesPath(), 'activities.db'),
       onCreate: (db, version) async {
@@ -757,18 +800,23 @@ class _ImportRoutePageState extends State<ImportRoutePage> {
         isPublic: isPublic,
         exertion: exertion);
 
-    // UNCOMMENT THE LINE BELOW IF YOU F--d UP
+    // UNCOMMENT THE LINE BELOW IF YOU messed UP
     //
     //
     // await deleteDatabase(p.join(await getDatabasesPath(), 'activities.db'));
     //
     //
-    // UNCOMMENT THE LINE ABOVE IF YOU F--d UP
+    // UNCOMMENT THE LINE ABOVE IF YOU messed UP
 
     insertIntoDatabase(activityObject, database);
   }
 
   void insertIntoDatabase(Activity activity, Database database) async {
+    /*
+        DESC: Inserts activity into SQL database
+        PARAMS: Activity & database location
+        RETURNS: Null
+    */
     await database.rawInsert(
         "INSERT INTO activities(id, title, description, distance, timeElapsed, averageVelocity, caloriesBurnt, isPublic, exertion) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?)",
         [
