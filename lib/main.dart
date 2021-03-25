@@ -1,6 +1,8 @@
+// Required imports for Google Material Design and Flutter Services
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+// Import home page file
 import './home.dart';
 
 void main() {
@@ -15,6 +17,7 @@ void main() {
 class App extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    return new MaterialApp(debugShowCheckedModeBanner: false, theme: ThemeData(fontFamily: 'Poppins'), title: 'Drivetrain 0.1.0pr-8', home: new HomeMain());
+    // Sets important constants
+    return new MaterialApp(debugShowCheckedModeBanner: false, theme: ThemeData(fontFamily: 'Poppins'), title: 'Drivetrain 0.2', home: new HomeMain());
   }
 }
