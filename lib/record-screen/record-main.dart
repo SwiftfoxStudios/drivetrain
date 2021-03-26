@@ -182,6 +182,7 @@ class _RecordingState extends State<Recording> {
   bool travelType;
   Color testVal;
 
+  // DEFAULT VARIABLES, can be overriden
   var clock = Stopwatch();
   final duration = const Duration(seconds: 1);
   String displayTime = "0:00";
@@ -210,7 +211,9 @@ class _RecordingState extends State<Recording> {
 
   _RecordingState(this.travelType);
 
+  
   void parseType() {
+    // TEST PURPOSES
     if (travelType) {
       testVal = Colors.green;
     } else {
@@ -237,6 +240,11 @@ class _RecordingState extends State<Recording> {
   }
 
   void checkPaused() {
+    /*
+        DESC: Checks if stopwatch recording is paused
+        PARAMS: Null
+        RETURNS: Null
+    */
     if (clockIsPaused) {
       isPaused = Icon(
         Icons.play_arrow,
@@ -253,6 +261,11 @@ class _RecordingState extends State<Recording> {
   }
 
   void checkifFullScreen() {
+    /*
+        DESC: Checks if app is displayed in fullscreen
+        PARAMS: Null
+        RETURNS: Null
+    */
     if (!isFullScreen) {
       isFullScreenWidget = Icon(
         Icons.fullscreen,
@@ -269,15 +282,30 @@ class _RecordingState extends State<Recording> {
   }
 
   void startClock() {
+    /*
+        DESC: Starts recording clock
+        PARAMS: Null
+        RETURNS: Null
+    */
     clockIsPaused = false;
     Timer(duration, iterateClock);
   }
 
   void pauseClock() {
+    /*
+        DESC: Pauses clock
+        PARAMS: Null
+        RETURNS: Null
+    */
     clockIsPaused = true;
   }
 
   void iterateClock() {
+    /*
+        DESC: Iterates clock by one second every second
+        PARAMS: Null
+        RETURNS: Null
+    */
     if (clock.isRunning) {
       startClock();
     }
@@ -299,6 +327,8 @@ class _RecordingState extends State<Recording> {
     });
   }
 
+  // DEPRECATED CODE - LEFT TO CLEAN UP
+  
   // void startListening() async {
   //   gpx.metadata = Metadata(name: DateTime.now().millisecondsSinceEpoch.toString(), time: DateTime.now());
   //   location.changeSettings(distanceFilter: 10, accuracy: LocationAccuracy.high);
@@ -310,23 +340,28 @@ class _RecordingState extends State<Recording> {
   // }
 
   void updateTracking() async {
-    print("fn accessed");
+    /*
+        DESC: Updates user position on google map
+        PARAMS: Null
+        RETURNS: Null
+    */
     print(await location.getLocation());
     await location.getLocation().then((value) async {
-      print("value");
       updatePosition(value.latitude, value.longitude, value.altitude);
       updateVelocity(value.speed);
       updateAverageVelocity(displayDistance, displayTimeInSeconds);
       final GoogleMapController controller = await _controller.future;
       controller.animateCamera(
           CameraUpdate.newCameraPosition(CameraPosition(target: LatLng(value.latitude, value.longitude), zoom: 15)));
-      print("fn complete");
     });
   }
 
   void updatePosition(double finalLat, double finalLon, double finalAltitude) async {
-    print("updatePosition $finalLat, $finalLon");
-    print(visitedPoints);
+    /*
+        DESC: Adds all data since last update to metadata files
+        PARAMS: Current Position Data
+        RETURNS: Null
+    */
     double initialLat;
     double initialLon;
     LatLng startPoint;
@@ -369,7 +404,12 @@ class _RecordingState extends State<Recording> {
     });
   }
 
-  double calculateDistance(double lat1, double lon1, double lat2, double lon2) {
+  double calculateDistance(double lat1, double lon1, double lat2, double lon2) 
+    /*
+        DESC: Uses Haversine Formula to calculate distance between two points
+        PARAMS: Origin and Destination Points
+        RETURNS: Distance between points
+    */
     cachedLat = lat2;
     cachedLon = lon2;
     // HAVERSINE FORMULA
@@ -390,7 +430,11 @@ class _RecordingState extends State<Recording> {
   }
 
   void updateVelocity(double estimatedVelocity) {
-    print("updateVelocity $estimatedVelocity");
+    /*
+        DESC: Updates current velocity based on native estimations (and converts from m/s to kmh)
+        PARAMS: Native estimated velocity
+        RETURNS: Null
+    */
     estimatedVelocity = estimatedVelocity * 18 / 5;
     setState(() {
       displayVelocity = estimatedVelocity.toStringAsFixed(1);
@@ -398,7 +442,11 @@ class _RecordingState extends State<Recording> {
   }
 
   void updateAverageVelocity(String elapsedDistance, int elapsedTime) {
-    print("updateAVGV $elapsedDistance, $elapsedTime");
+    /*
+        DESC: Updates average velocity by calculating mean velocity over time
+        PARAMS: Distance, Time (v = d/t)
+        RETURNS: Null
+    */
     double distance = double.parse(elapsedDistance);
     double time = elapsedTime / 3600;
     double averageVelocity = distance / time;
@@ -407,8 +455,17 @@ class _RecordingState extends State<Recording> {
     });
   }
 
-/* NEED TO EDIT BELOW FN TO ACCOUNT FOR DEVICES WITHOUT BAROMETER */
+/* 
+NEED TO EDIT BELOW FN TO ACCOUNT FOR DEVICES WITHOUT BAROMETER
+THIS PROGRAM WILL NOT WORK FOR DEVICES WITHOUT A BAROMETER
+*/
+
   void calculateAngleOfIncline(double distance, double startAltitude, double endAltitude) {
+    /*
+        DESC: Calculates angle of current incline
+        PARAMS: Distance and change in Elevation
+        RETURNS: Null
+    */
     double deltaAltitude = endAltitude - startAltitude;
     double estimatedIncline = deltaAltitude / distance * 100;
     setState(() {
@@ -417,6 +474,11 @@ class _RecordingState extends State<Recording> {
   }
 
   void calculatePowerOutput() {
+    /*
+        DESC: Estimates power output from user
+        PARAMS: Null
+        RETURNS: Null
+    */
     // Nf = mgcos(x)
     double normalForce = (riderMass + bikeMass) * 9.81 * cos(atan(double.parse(displayIncline) / 100));
     double velocity = double.parse(displayVelocity);
@@ -547,6 +609,11 @@ class _RecordingState extends State<Recording> {
   }
 
   void addPoly() {
+    /*
+        DESC: Adds polylines to google map
+        PARAMS: Null
+        RETURNS: Null
+    */
     PolylineId id = PolylineId("test");
     setState(() {
       polyline.add(Polyline(polylineId: id, points: visitedPoints, width: 5, color: Color(accent)));
@@ -834,12 +901,22 @@ class _SaveRoutePageState extends State<SaveRoutePage> {
   }
 
   int calculateCaloriesBurnt(time, mass) {
+    /*
+        DESC: Estimates number of calories burnt from time exercising and rider mass constant
+        PARAMS: Elapsed Time, Rider Mass
+        RETURNS: Calories Burnt
+    */
     const double metabolicTaskEquivalent = 9.5;
     double count = (time * metabolicTaskEquivalent * mass / (200 * 60));
     return count.round();
   }
 
   void insertIntoDatabase(Activity activity, Database database) async {
+    /*
+        DESC: Inserts recorded metadata into database
+        PARAMS: Acitivty object and database location
+        RETURNS: Null
+    */
     await database.rawInsert(
         "INSERT INTO activities(id, title, description, distance, timeElapsed, averageVelocity, caloriesBurnt, isPublic, exertion) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?)",
         [
@@ -868,6 +945,11 @@ class _SaveRoutePageState extends State<SaveRoutePage> {
     String filename;
 
     await getApplicationDocumentsDirectory().then((value) {
+      /*
+        DESC: Locates directory of SQL DB and saves file accordingly
+        PARAMS: Directory
+        RETURNS: Null
+    */
       filename = p.join("${value.path}/", "$validFilename.gpx");
       print(value.path);
     });
@@ -877,6 +959,11 @@ class _SaveRoutePageState extends State<SaveRoutePage> {
   }
 
   void publishActivity(String title, String description) async {
+    /*
+        DESC: Publishes activity to database
+        PARAMS: Title, Description of acitivty
+        RETURNS: Null
+    */
     if (activityTitle == "" || activityTitle == null) {
       showNullErrorDialog();
     } else {
@@ -902,13 +989,13 @@ class _SaveRoutePageState extends State<SaveRoutePage> {
           isPublic: isPublic,
           exertion: exertion);
 
-      // UNCOMMENT THE LINE BELOW IF YOU F--d UP
+      // UNCOMMENT THE LINE BELOW IF YOU messed UP
       //
       //
       // await deleteDatabase(p.join(await getDatabasesPath(), 'activities.db'));
       //
       //
-      // UNCOMMENT THE LINE ABOVE IF YOU F--d UP
+      // UNCOMMENT THE LINE ABOVE IF YOU messed UP
 
       Database database = await openDatabase(
         p.join(await getDatabasesPath(), 'activities.db'),
