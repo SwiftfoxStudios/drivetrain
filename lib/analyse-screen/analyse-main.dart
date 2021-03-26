@@ -219,67 +219,6 @@ class _AnalyseRecPageState extends State<AnalyseRecPage> {
     ));
   }
 
-  // DONT FORGET TO COMMENT THIS YOU IDIOT
-
-  void merge(List list, int left, int middle, int right) {
-    int leftSize = middle - left + 1;
-    int rightSize = right - middle;
-
-    List leftList = new List(leftSize);
-    List rightList = new List(rightSize);
-
-    for (int leftIterator = 0; leftIterator < leftSize; leftIterator++)
-      leftList[leftIterator] = list[left + leftIterator];
-    for (int rightIterator = 0; rightIterator < rightSize; rightIterator++)
-      rightList[rightIterator] = list[middle + rightIterator + 1];
-
-    int leftIterator = 0, rightIterator = 0;
-    int indexIterator = left;
-
-    while (leftIterator < leftSize && rightIterator < rightSize) {
-      if (leftList[leftIterator] <= rightList[rightIterator]) {
-        list[indexIterator] = leftList[leftIterator];
-        leftIterator++;
-      } else {
-        list[indexIterator] = rightList[rightIterator];
-        rightIterator++;
-      }
-      indexIterator++;
-    }
-
-    while (leftIterator < leftSize) {
-      list[indexIterator] = leftList[leftIterator];
-      leftIterator++;
-      indexIterator++;
-    }
-
-    while (rightIterator < rightSize) {
-      list[indexIterator] = rightList[rightIterator];
-      rightIterator++;
-      indexIterator++;
-    }
-  }
-
-  void mergeSort(List list, int left, int right) {
-    List cachedList;
-    bool started = false;
-    if (left == 0 && right == list.length - 1) {
-      cachedList = list;
-    }
-    if (left < right) {
-      started = true;
-      int middle = (right + left) ~/ 2;
-
-      mergeSort(list, left, middle);
-      mergeSort(list, middle + 1, right);
-
-      merge(list, left, middle, right);
-    }
-    if (cachedList == list && started == true) {
-      print(list);
-    }
-  }
-
   Widget build(BuildContext context) {
     // DEVICE DIMENSIONS FOR DEVICE-SPECIFIC MEASUREMENTS
     final deviceHeight = MediaQuery.of(context).size.height;
