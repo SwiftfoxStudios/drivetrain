@@ -109,8 +109,6 @@ class _RecordMainState extends State<RecordMain> {
             height: deviceHeight / 2 - (56 + statusHeight) - deviceHeight / 10,
           ),
           Container(
-            // BREAKPOINT FOR SOME BULLSHIT I CANT FUCKING REMEMBER
-            // too bad !
             height: deviceHeight / 18,
             decoration: new BoxDecoration(
                 color: Color(bgDark),
