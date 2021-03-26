@@ -1,21 +1,23 @@
-// MAIN DART PARENT IMPORT
+// Dart math, I/O and asynchronous handling
 import 'dart:async';
 import 'dart:math';
 import 'dart:io';
 
-// FILE DEPENDENCIES
-import 'package:flutter/foundation.dart';
-import 'package:path_provider/path_provider.dart';
-import 'package:flutter/material.dart';
-import 'package:google_maps_flutter/google_maps_flutter.dart';
+// Google Material Design and Flutter Services
 import 'package:flutter/services.dart';
-import 'package:location/location.dart';
+import 'package:flutter/material.dart';
 
+// Google Map and Location Packages
+import 'package:flutter/foundation.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:location/location.dart';
 import 'package:gpx/gpx.dart';
 
+// File Handling Libraries
 import '../activityClass.dart';
 import 'package:path/path.dart' as p;
 import 'package:sqflite/sqflite.dart';
+import 'package:path_provider/path_provider.dart';
 
 // COLOURS USED IN PROJECT
 const bgDark = 0xff202020;
