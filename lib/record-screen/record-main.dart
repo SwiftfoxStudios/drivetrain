@@ -211,7 +211,6 @@ class _RecordingState extends State<Recording> {
 
   _RecordingState(this.travelType);
 
-  
   void parseType() {
     // TEST PURPOSES
     if (travelType) {
@@ -328,7 +327,7 @@ class _RecordingState extends State<Recording> {
   }
 
   // DEPRECATED CODE - LEFT TO CLEAN UP
-  
+
   // void startListening() async {
   //   gpx.metadata = Metadata(name: DateTime.now().millisecondsSinceEpoch.toString(), time: DateTime.now());
   //   location.changeSettings(distanceFilter: 10, accuracy: LocationAccuracy.high);
@@ -404,7 +403,7 @@ class _RecordingState extends State<Recording> {
     });
   }
 
-  double calculateDistance(double lat1, double lon1, double lat2, double lon2) 
+  double calculateDistance(double lat1, double lon1, double lat2, double lon2) {
     /*
         DESC: Uses Haversine Formula to calculate distance between two points
         PARAMS: Origin and Destination Points
